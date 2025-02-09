@@ -25,11 +25,34 @@ export const projectsTable = pgTable("projects", {
   deletedAt: timestamp("deleted_at"),
 });
 
-export const projectsRelations = relations(projectsTable, ({ one }) => ({
+export const projectsRelations = relations(projectsTable, ({ one, many }) => ({
   user: one(usersTable, {
     fields: [projectsTable.userId],
     references: [usersTable.id],
   }),
+  commits: many(commitsTable),
 }));
 
 export const insertProjectsSchema = createInsertSchema(projectsTable);
+
+export const commitsTable = pgTable("commits", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  projectId: uuid("project_id").references(() => projectsTable.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  commitMessage: text("commit_message").notNull(),
+  commitHash: text("commit_hash").notNull(),
+  commitAuthorName: text("commit_author_name").notNull(),
+  commitAuthorAvatar: text("commit_author_avatar").notNull(),
+  commitDate: timestamp("commit_date").notNull(),
+  summary: text("summary").notNull(),
+});
+
+export const commitsRelations = relations(commitsTable, ({ one }) => ({
+  project: one(projectsTable, {
+    fields: [commitsTable.projectId],
+    references: [projectsTable.id],
+  }),
+}));
+
+export const insertCommitsSchema = createInsertSchema(commitsTable);

@@ -30,3 +30,15 @@ export const useProjectsStore = create<ProjectsStore>((set) => ({
     })),
   clearAll: () => set({ projects: [] }),
 }));
+
+interface ProjectStore {
+  project: project | null;
+  setProject: (project: project) => void;
+  clearProject: () => void;
+}
+
+export const useProjectStore = create<ProjectStore>((set) => ({
+  project: null,
+  setProject: (project) => set({ project }),
+  clearProject: () => set({ project: null }),
+}));

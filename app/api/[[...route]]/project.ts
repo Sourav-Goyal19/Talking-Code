@@ -83,6 +83,38 @@ const app = new Hono()
 
       return ctx.json({ data: projects }, 200);
     }
+  )
+  .get(
+    "/:id",
+    zValidator(
+      "param",
+      z.object({
+        email: z.string().email(),
+        id: z.string().uuid("Invalid Project Id"),
+      })
+    ),
+    async (ctx) => {
+      const { email, id } = ctx.req.valid("param");
+      const [user] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.email, email));
+
+      if (!user) {
+        throw new HTTPException(404, { message: "User Not Found" });
+      }
+
+      const [project] = await db
+        .select()
+        .from(projectsTable)
+        .where(eq(projectsTable.id, id));
+
+      if (!project) {
+        throw new HTTPException(404, { message: "Project Not Found" });
+      }
+
+      return ctx.json({ data: project }, 200);
+    }
   );
 
 export default app;

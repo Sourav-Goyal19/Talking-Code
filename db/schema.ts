@@ -20,7 +20,9 @@ export const projectsTable = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   githubUrl: text("github_url").notNull(),
-  userId: uuid("user_id").references(() => usersTable.id),
+  userId: uuid("user_id").references(() => usersTable.id, {
+    onDelete: "cascade",
+  }),
   createdAt: timestamp("created_at").defaultNow(),
   deletedAt: timestamp("deleted_at"),
 });
@@ -37,14 +39,16 @@ export const insertProjectsSchema = createInsertSchema(projectsTable);
 
 export const commitsTable = pgTable("commits", {
   id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id").references(() => projectsTable.id),
+  projectId: uuid("project_id").references(() => projectsTable.id, {
+    onDelete: "cascade",
+  }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   commitMessage: text("commit_message").notNull(),
   commitHash: text("commit_hash").notNull(),
   commitAuthorName: text("commit_author_name").notNull(),
   commitAuthorAvatar: text("commit_author_avatar").notNull(),
-  commitDate: timestamp("commit_date").notNull(),
+  commitDate: text("commit_date").notNull(),
   summary: text("summary").notNull(),
 });
 

@@ -15,6 +15,13 @@
       "when": 1739105256124,
       "tag": "0001_windy_madelyne_pryor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1739171340650,
+      "tag": "0002_groovy_firelord",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import { db } from "@/db/drizzle";
 import { projectsTable, usersTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { HTTPException } from "hono/http-exception";
+import { pullCommits } from "@/lib/github";
 
 const app = new Hono()
   .post(
@@ -49,6 +50,8 @@ const app = new Hono()
         if (!project) {
           throw new HTTPException(500, { message: "Failed to create project" });
         }
+
+        await pullCommits(project.id);
 
         return ctx.json({ ...project }, 200);
       } catch (error) {

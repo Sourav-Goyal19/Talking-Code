@@ -1,4 +1,5 @@
-"use client";
+'use server'
+
 import { llm } from "./github";
 import { db } from "@/db/drizzle";
 import { TaskType } from "@google/generative-ai";
@@ -6,7 +7,9 @@ import { Document } from "@langchain/core/documents";
 import { sourceCodeEmbeddingTable } from "@/db/schema";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
+// import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
+import { loadGithubRepo } from "./loadGithub";
+  
 
 const summaryPrompt = ChatPromptTemplate.fromMessages([
   [
@@ -76,27 +79,7 @@ export const indexGithubRepo = async (
   }
 };
 
-export const loadGithubRepo = async (
-  github_url: string,
-  branch: string = "main",
-  github_token?: string
-) => {
-  try {
-    console.log("Calling");
-    const loader = new GithubRepoLoader(github_url, {
-      branch,
-      recursive: true,
-      unknown: "warn",
-      accessToken: github_token || "",
-      ignoreFiles: ["bun.lockb"],
-    });
-    console.log("Calling");
-    return await loader.load();
-  } catch (error) {
-    console.error("Error loading GitHub repo:", error);
-    throw new Error("Failed to load GitHub repository.");
-  }
-};
+
 
 export const generateAllEmbeddings = async (docs: Document[]) => {
   return Promise.allSettled(

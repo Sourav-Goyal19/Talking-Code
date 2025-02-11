@@ -1,11 +1,12 @@
-import { Hono } from "hono";
-import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import { Hono } from "hono";
 import { db } from "@/db/drizzle";
-import { projectsTable, usersTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { HTTPException } from "hono/http-exception";
 import { pullCommits } from "@/lib/github";
+import { zValidator } from "@hono/zod-validator";
+import { HTTPException } from "hono/http-exception";
+import { indexGithubRepo } from "@/lib/github-loader";
+import { projectsTable, usersTable } from "@/db/schema";
 
 const app = new Hono()
   .post(
@@ -47,15 +48,29 @@ const app = new Hono()
           })
           .returning();
 
-        if (!project) {
+        if (!project || !project.id) {
           throw new HTTPException(500, { message: "Failed to create project" });
         }
 
-        await pullCommits(project.id);
+        try {
+          await pullCommits(project.id);
+        } catch (error) {
+          console.error("Error pulling commits:", error);
+          throw new HTTPException(500, { message: "Failed to pull commits" });
+        }
+
+        try {
+          await indexGithubRepo(project.id, githubUrl, accessToken);
+        } catch (error) {
+          console.error("Error indexing GitHub repo:", error);
+          throw new HTTPException(500, {
+            message: "Failed to index GitHub repository",
+          });
+        }
 
         return ctx.json({ ...project }, 200);
-      } catch (error) {
-        console.log(error);
+      } catch (error: any) {
+        console.error("Unexpected Error:", error?.stack || error);
         throw new HTTPException(500, { message: "Something Went Wrong" });
       }
     }

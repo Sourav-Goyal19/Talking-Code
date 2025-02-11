@@ -25,7 +25,7 @@ const prompt = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-const llm = new ChatGoogleGenerativeAI({
+export const llm = new ChatGoogleGenerativeAI({
   model: "gemini-1.5-flash",
   temperature: 0,
   maxRetries: 2,
@@ -36,7 +36,7 @@ export const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
 });
 
-type Response = {
+export type Response = {
   commitHash: string;
   commitMessage: string;
   commitAuthorName: string;
@@ -87,8 +87,15 @@ export const pullCommits = async (projectId: string) => {
     unprocessedCommits
   );
 
+  const filteredCommitsWithSummary = commitsWithSummary
+    .filter((commit) => commit.status == "fulfilled")
+    .map(
+      (result) =>
+        (result as PromiseFulfilledResult<Response & { summary: string }>).value
+    );
+
   await db.insert(commitsTable).values(
-    commitsWithSummary.map((commit) => ({
+    filteredCommitsWithSummary.map((commit) => ({
       projectId: project.id,
       commitHash: commit.commitHash,
       commitMessage: commit.commitMessage,
@@ -98,8 +105,6 @@ export const pullCommits = async (projectId: string) => {
       summary: commit.summary as string,
     }))
   );
-
-  return commitsWithSummary;
 };
 
 const generateSummary = async (
@@ -108,7 +113,7 @@ const generateSummary = async (
 ) => {
   const chain = prompt.pipe(llm);
 
-  return Promise.all(
+  return await Promise.allSettled(
     unprocessedCommits.map(async (commit) => {
       try {
         const { data: diff } = await axios.get(

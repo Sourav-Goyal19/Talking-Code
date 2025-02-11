@@ -1,6 +1,13 @@
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
-import { pgTable, text, timestamp, varchar, uuid } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  varchar,
+  uuid,
+  vector,
+} from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -33,6 +40,7 @@ export const projectsRelations = relations(projectsTable, ({ one, many }) => ({
     references: [usersTable.id],
   }),
   commits: many(commitsTable),
+  sourceCodeEmbedding: many(sourceCodeEmbeddingTable),
 }));
 
 export const insertProjectsSchema = createInsertSchema(projectsTable);
@@ -60,3 +68,26 @@ export const commitsRelations = relations(commitsTable, ({ one }) => ({
 }));
 
 export const insertCommitsSchema = createInsertSchema(commitsTable);
+
+export const sourceCodeEmbeddingTable = pgTable("source_code_embedding", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  summaryEmbedding: vector("summary_embedding", { dimensions: 768 }),
+  sourceCode: text("source_code").notNull(),
+  fileName: text("file_name").notNull(),
+  summary: text("summary").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  projectId: uuid("project_id").references(() => projectsTable.id, {
+    onDelete: "cascade",
+  }),
+});
+
+export const sourceCodeEmbeddingRelations = relations(
+  sourceCodeEmbeddingTable,
+  ({ one }) => ({
+    project: one(projectsTable, {
+      fields: [sourceCodeEmbeddingTable.projectId],
+      references: [projectsTable.id],
+    }),
+  })
+);

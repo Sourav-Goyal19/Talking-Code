@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 export const middleware = (req: NextRequest) => {
   const pathname = req.nextUrl.pathname;
 
-  const isPublicPath = pathname == "/sign-in" || pathname == "sign-up";
+  const isPublicPath = pathname == "/sign-in" || pathname == "/sign-up";
+  const homePage = pathname == "/";
 
   const nextAuthToken =
     req.cookies.get("next-auth.session-token") ||
@@ -13,13 +14,13 @@ export const middleware = (req: NextRequest) => {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  if (!isPublicPath && !nextAuthToken) {
+  if (!isPublicPath && !homePage && !nextAuthToken) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
-  if (isPublicPath && !nextAuthToken) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
+  // if (isPublicPath && !nextAuthToken) {
+  //   return NextResponse.redirect(new URL("/", req.url));
+  // }
 };
 
 export const config = {

@@ -9,7 +9,7 @@ type RequestType = InferRequestType<
 
 type ResponseType = InferResponseType<
   (typeof client.api)[":email"]["projects"]["new"]["$post"]
->;
+>["data"];
 
 export const useCreateProject = (email: string) => {
   const queryClient = useQueryClient();
@@ -21,20 +21,20 @@ export const useCreateProject = (email: string) => {
           email,
         },
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error creating project:", errorData);
-        const errorMessage = response.statusText;
-        throw new Error(errorMessage);
-      }
-      const data = await response.json();
+      // if (!response.ok) {
+      //   const errorData = await response.json();
+      //   console.error("Error creating project:", errorData);
+      //   const errorMessage = response.statusText;
+      //   throw new Error(errorMessage);
+      // }
+      const { data } = await response.json();
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
     onError: (error) => {
-      console.error("Error creating project:", error);
+      console.error("Error creating project:", error.message);
       toast.error("Failed to create project");
     },
   });

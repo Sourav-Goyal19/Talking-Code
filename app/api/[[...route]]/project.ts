@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { Hono } from "hono";
-import { db } from "@/db/drizzle";
 import { eq } from "drizzle-orm";
+import { db } from "@/db/drizzle";
 import { pullCommits } from "@/lib/github";
 import { zValidator } from "@hono/zod-validator";
 import { HTTPException } from "hono/http-exception";
-import { indexGithubRepo } from "@/lib/github-loader";
+import { indexGithubRepo } from "@/lib/github-load";
 import { projectsTable, usersTable } from "@/db/schema";
 
 const app = new Hono()
@@ -68,7 +68,7 @@ const app = new Hono()
           });
         }
 
-        return ctx.json({ ...project }, 200);
+        return ctx.json({ data: project }, 200);
       } catch (error: any) {
         console.error("Unexpected Error:", error?.stack || error);
         throw new HTTPException(500, { message: "Something Went Wrong" });

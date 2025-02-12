@@ -1,4 +1,4 @@
-'use server'
+"use server";
 
 import { llm } from "./github";
 import { db } from "@/db/drizzle";
@@ -8,8 +8,8 @@ import { sourceCodeEmbeddingTable } from "@/db/schema";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 // import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
-import { loadGithubRepo } from "./loadGithub";
-  
+import { loadGithubRepo } from "./load-github";
+import axios from "axios";
 
 const summaryPrompt = ChatPromptTemplate.fromMessages([
   [
@@ -45,32 +45,42 @@ export const indexGithubRepo = async (
   branch: string = "main",
   github_token?: string
 ) => {
-  console.log("Calling");
+  // console.log("Calling");
   try {
-    const docs = await loadGithubRepo(github_url, branch, github_token);
-    console.log(docs);
-    const allEmbeddings = await generateAllEmbeddings(docs);
-
-    const filteredEmbeddings = allEmbeddings
-      .filter(
-        (result) => result.status === "fulfilled" && result.value !== null
-      )
-      .map((result) => (result as PromiseFulfilledResult<any>).value);
-
-    if (filteredEmbeddings.length === 0) {
-      console.log("No embeddings generated. Skipping database insertion.");
-      return;
-    }
-
-    await db.insert(sourceCodeEmbeddingTable).values(
-      filteredEmbeddings.map((embed) => ({
-        projectId,
-        summary: embed.summary,
-        embedding: embed.embedding,
-        sourceCode: embed.sourceCode,
-        fileName: embed.fileName,
-      }))
+    // const { data: docs } = await loadGithubRepo(
+    //   github_url,
+    //   branch,
+    //   github_token
+    // );
+    // console.log(docs);
+    const res = await axios.get(
+      `${process.env.PYTHON_BACKEND_URL}?github_url=${github_url}`
     );
+    // console.log(res.data);
+    const files = parseFiles(res.data.content);
+    // console.log(files["README.md"]);
+    // const allEmbeddings = await generateAllEmbeddings(docs);
+
+    // const filteredEmbeddings = allEmbeddings
+    //   .filter(
+    //     (result) => result.status === "fulfilled" && result.value !== null
+    //   )
+    //   .map((result) => (result as PromiseFulfilledResult<any>).value);
+
+    // if (filteredEmbeddings.length === 0) {
+    //   console.log("No embeddings generated. Skipping database insertion.");
+    //   return;
+    // }
+
+    // await db.insert(sourceCodeEmbeddingTable).values(
+    //   filteredEmbeddings.map((embed) => ({
+    //     projectId,
+    //     summary: embed.summary,
+    //     embedding: embed.embedding,
+    //     sourceCode: embed.sourceCode,
+    //     fileName: embed.fileName,
+    //   }))
+    // );
 
     console.log("Successfully indexed GitHub repository.");
   } catch (error) {
@@ -79,7 +89,25 @@ export const indexGithubRepo = async (
   }
 };
 
+function parseFiles(data: string): Record<string, string> {
+  const files: Record<string, string> = {};
 
+  const sections = data.split(
+    /================================================\nFile: /
+  );
+
+  sections.slice(1).forEach((section) => {
+    const lines = section.split("\n");
+    const filename = lines.shift()?.trim();
+    const content = lines.join("\n").trim();
+
+    if (filename) {
+      files[filename] = content;
+    }
+  });
+
+  return files;
+}
 
 export const generateAllEmbeddings = async (docs: Document[]) => {
   return Promise.allSettled(

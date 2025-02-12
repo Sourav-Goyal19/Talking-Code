@@ -1,7 +1,7 @@
 import { client } from "@/lib/hono";
 import { useQuery } from "@tanstack/react-query";
 
-export const useGetAllProjects = (email: string, id: string) => {
+export const useGetProject = (email: string, id: string) => {
   return useQuery({
     queryKey: ["projects", email],
     queryFn: async () => {

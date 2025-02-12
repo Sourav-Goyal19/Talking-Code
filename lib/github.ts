@@ -93,7 +93,7 @@ export const pullCommits = async (projectId: string) => {
       (result) =>
         (result as PromiseFulfilledResult<Response & { summary: string }>).value
     );
-
+  // console.log(filteredCommitsWithSummary);
   await db.insert(commitsTable).values(
     filteredCommitsWithSummary.map((commit) => ({
       projectId: project.id,

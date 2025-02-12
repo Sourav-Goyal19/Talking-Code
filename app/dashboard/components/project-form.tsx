@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useCreateProject } from "@/features/apis/use-create-project";
+import axios from "axios";
 
 const NewProjectForm = () => {
   const { data } = useSession();
@@ -38,9 +39,8 @@ const NewProjectForm = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<FormType> = (data) => {
+  const onSubmit: SubmitHandler<FormType> = async (data) => {
     console.log(data);
-
     projectMutation.mutate(data, {
       onSuccess: (data) => {
         console.log(data);

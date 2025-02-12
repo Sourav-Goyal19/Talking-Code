@@ -7,6 +7,7 @@ import {
   varchar,
   uuid,
   vector,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
@@ -69,18 +70,33 @@ export const commitsRelations = relations(commitsTable, ({ one }) => ({
 
 export const insertCommitsSchema = createInsertSchema(commitsTable);
 
-export const sourceCodeEmbeddingTable = pgTable("source_code_embedding", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  summaryEmbedding: vector("summary_embedding", { dimensions: 768 }),
-  sourceCode: text("source_code").notNull(),
-  fileName: text("file_name").notNull(),
-  summary: text("summary").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  projectId: uuid("project_id").references(() => projectsTable.id, {
-    onDelete: "cascade",
-  }),
-});
+export const sourceCodeEmbeddingTable = pgTable(
+  "source_code_embedding",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sourceCode: text("source_code").notNull(),
+    fileName: text("file_name").notNull(),
+    summary: text("summary").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+    projectId: uuid("project_id").references(() => projectsTable.id, {
+      onDelete: "cascade",
+    }),
+    summaryEmbedding: vector("summary_embedding", { dimensions: 768 }),
+  },
+  // (table) => [
+  //   index("embeddingIndex").using(
+  //     "hnsw",
+  //     table.embedding.op("vector_cosine_ops")
+  //   ),
+  // ]
+  (table) => ({
+    embeddingIndex: index("embeddingIndex").using(
+      "hnsw",
+      table.summaryEmbedding.op("vector_cosine_ops")
+    ),
+  })
+);
 
 export const sourceCodeEmbeddingRelations = relations(
   sourceCodeEmbeddingTable,

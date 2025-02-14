@@ -100,7 +100,7 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
             <div className="space-y-3 border rounded-md shadow-xl bg-custom2 py-2 px-4">
               <MDEditor.Markdown
                 source={ct.ai_response || "Thinking......."}
-                className="w-full !h-full max-h-[60vh] overflow-auto text-foreground bg-transparent text-base border-b-2 border-white pb-"
+                className="w-full !h-full max-h-[60vh] overflow-auto text-foreground bg-transparent text-base border-b-2 border-white pb-10"
                 style={{
                   background: "transparent",
                   fontSize: "1rem",

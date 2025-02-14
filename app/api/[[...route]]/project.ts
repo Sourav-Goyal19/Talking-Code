@@ -17,6 +17,14 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { streamSSE } from "hono/streaming";
 
+import { Ollama } from "@langchain/ollama";
+import { ChatDeepSeek } from "@langchain/deepseek";
+// const llm = new ChatDeepSeek({
+//   model: "deepseek-reasoner",
+//   temperature: 0,
+//   apiKey: process.env.DEEPSEEK_API_KEY,
+// });
+
 const llm = new ChatGoogleGenerativeAI({
   model: "gemini-1.5-flash",
   apiKey: process.env.GOOGLE_API_KEY,
@@ -196,15 +204,21 @@ const app = new Hono()
       })
     ),
     zValidator(
-      "query",
+      "json",
       z.object({
+
         json: z.string().min(1, "Query is required"),
         projectId: z.string().uuid("Invalid project id"),
+
       })
     ),
     async (ctx) => {
       const { email } = ctx.req.valid("param");
+
       const { projectId, json } = ctx.req.valid("query");
+
+      
+
 
       const [user] = await db
         .select()

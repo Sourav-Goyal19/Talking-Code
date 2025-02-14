@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Talking Code",
+  "version": "1.0.0",
+  "description": "Extension to talk to a GitHub repo",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "http://localhost:3000/api/test@gmail.com/projects/query"
+  ],
+  "action": {
+    "default_popup": "index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "host_permissions": [
+    "https://api.github.com/*",
+    "http://localhost:3000/api/test@gmail.com/projects/query"
+  ]
+}

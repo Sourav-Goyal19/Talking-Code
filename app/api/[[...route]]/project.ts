@@ -17,6 +17,14 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { streamSSE } from "hono/streaming";
 
+import { Ollama } from "@langchain/ollama";
+import { ChatDeepSeek } from "@langchain/deepseek";
+// const llm = new ChatDeepSeek({
+//   model: "deepseek-reasoner",
+//   temperature: 0,
+//   apiKey: process.env.DEEPSEEK_API_KEY,
+// });
+
 const llm = new ChatGoogleGenerativeAI({
   model: "gemini-1.5-flash",
   apiKey: process.env.GOOGLE_API_KEY,

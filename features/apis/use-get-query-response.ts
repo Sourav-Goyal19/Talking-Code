@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 type RequestType = InferRequestType<
   (typeof client.api)[":email"]["projects"]["query"]["$post"]
->["query"];
+>["json"];
 type ResponseType = InferResponseType<
   (typeof client.api)[":email"]["projects"]["query"]["$post"]
 >;
@@ -16,7 +16,7 @@ export const useGetQueryResponse = (email: string) => {
     mutationFn: async ({ json, projectId }) => {
       const response = await client.api[":email"]["projects"]["query"]["$post"]({
         param: { email },
-        query: { json, projectId },
+        json: { json, projectId },
       });
       if (!response.ok) {
         throw new Error(`Error: ${response.status} ${response.statusText}`);

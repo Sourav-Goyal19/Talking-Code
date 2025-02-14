@@ -215,10 +215,7 @@ const app = new Hono()
     async (ctx) => {
       const { email } = ctx.req.valid("param");
 
-      const { projectId, json } = ctx.req.valid("query");
-
-      
-
+      const { projectId, json } = ctx.req.valid("json");
 
       const [user] = await db
         .select()

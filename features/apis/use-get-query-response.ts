@@ -4,29 +4,31 @@ import { InferRequestType, InferResponseType } from "hono";
 import { toast } from "sonner";
 
 type RequestType = InferRequestType<
-  (typeof client.api)[":email"]["projects"]["query"]["$get"]
+  (typeof client.api)[":email"]["projects"]["query"]["$post"]
 >["query"];
 type ResponseType = InferResponseType<
-  (typeof client.api)[":email"]["projects"]["query"]["$get"]
+  (typeof client.api)[":email"]["projects"]["query"]["$post"]
 >;
 
 export const useGetQueryResponse = (email: string) => {
   const queryClient = useQueryClient();
   return useMutation<ResponseType, Error, RequestType>({
-    mutationFn: async (json) => {
-      const response = await client.api[":email"]["projects"]["query"]["$get"]({
+    mutationFn: async ({ json, projectId }) => {
+      const response = await client.api[":email"]["projects"]["query"]["$post"]({
         param: { email },
-        query: json,
+        query: { json, projectId },
       });
-      const result = await response.json();
-      return result;
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["query", email], data);
     },
     onError: (error) => {
       console.error(error);
-      toast.error(error.message || "Something went wrong!");
+      toast.error(error.message || "Failed to fetch query response!");
     },
   });
 };

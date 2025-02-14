@@ -206,13 +206,16 @@ const app = new Hono()
     zValidator(
       "json",
       z.object({
-        query: z.string().min(1, "Query is required"),
-        projectId: z.string(),
+
+        json: z.string().min(1, "Query is required"),
+        projectId: z.string().uuid("Invalid project id"),
+
       })
     ),
     async (ctx) => {
       const { email } = ctx.req.valid("param");
-      const { projectId, query } = ctx.req.valid("json");
+
+      const { projectId, json } = ctx.req.valid("json");
 
       const [user] = await db
         .select()
@@ -223,7 +226,7 @@ const app = new Hono()
         throw new HTTPException(404, { message: "User Not Found" });
       }
 
-      const queryVector = await generateEmbeddings(query);
+      const queryVector = await generateEmbeddings(json);
       let context = "";
 
       const similarity = sql<number>`1-(${cosineDistance(
@@ -262,7 +265,7 @@ const app = new Hono()
       }
       const res = await chain.invoke({
         context,
-        question: query,
+        question: json,
       });
       return ctx.json({ data: updatedData, output: res });
     }

@@ -1,9 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Loader2, Globe } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useGetQueryResponse } from '@/features/apis/use-get-query-response';
+
+// Language interface
+interface Language {
+  code: string;
+  name: string;
+  voiceName?: string; 
+}
+
+const SUPPORTED_LANGUAGES: Language[] = [
+  { code: 'en-US', name: 'English (US)' },
+  { code: 'es-ES', name: 'Spanish' },
+  { code: 'fr-FR', name: 'French' },
+  { code: 'de-DE', name: 'German' },
+  { code: 'it-IT', name: 'Italian' },
+  { code: 'pt-PT', name: 'Portuguese' },
+  { code: 'hi-IN', name: 'Hindi' },
+  { code: 'ja-JP', name: 'Japanese' },
+  { code: 'ko-KR', name: 'Korean' },
+  { code: 'zh-CN', name: 'Chinese (Simplified)' },
+  { code: 'ar-SA', name: 'Arabic' },
+  { code: 'ru-RU', name: 'Russian' },
+];
 
 declare global {
   interface Window {
@@ -20,13 +42,39 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(SUPPORTED_LANGUAGES[0]);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    const loadVoices = () => {
+      setAvailableVoices(window.speechSynthesis.getVoices());
+    };
+
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
+  const getBestVoiceForLanguage = (langCode: string) => {
+    const voices = availableVoices;
+    const nativeVoice = voices.find(
+      voice => voice.lang.toLowerCase().includes(langCode.toLowerCase()) && voice.localService
+    );
+
+    const anyVoice = voices.find(
+      voice => voice.lang.toLowerCase().includes(langCode.toLowerCase())
+    );
+    return nativeVoice || anyVoice || voices[0];
+  };
 
   const speakResponse = (text: string) => {
+    window.speechSynthesis.cancel(); // Cancel any ongoing speech
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 1.0; 
-    utterance.pitch = 1.0;    
-    utterance.volume = 1.0;   
+    utterance.lang = selectedLanguage.code;
+    utterance.voice = getBestVoiceForLanguage(selectedLanguage.code);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -37,7 +85,6 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
   }, []);
 
   const toggleListening = async () => {
-    window.speechSynthesis.cancel()
     try {
       setError('');
       
@@ -47,12 +94,12 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+      stream.getTracks().forEach(track => track.stop());
 
       const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
       const recognition = new SpeechRecognition();
 
-      recognition.lang = 'en-US';
+      recognition.lang = selectedLanguage.code;
       recognition.continuous = false;
       recognition.interimResults = false;
 
@@ -64,7 +111,6 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
       recognition.onresult = (event: any) => {
         const text = event.results[0][0].transcript;
         setTranscript(text);
-        console.log(text)
         handleSubmit(text);
       };
 
@@ -96,20 +142,23 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
     
     setIsLoading(true);
     try {
-      queryMutation.mutate({ projectId, json:text },
+      queryMutation.mutate(
+        { 
+          projectId, 
+          json: text
+        },
         {
-            onSuccess: (data) => {
-              console.log(data);
-              setResponse(data.output);
-              speakResponse(data.output); // Added speech synthesis here
-            },
-            onError: (error) => {
-              console.error(error);
-              setError('Failed to get AI response. Please try again.');
-            }
+          onSuccess: (data) => {
+            console.log(data);
+            setResponse(data.output);
+            speakResponse(data.output);
+          },
+          onError: (error) => {
+            console.error(error);
+            setError('Failed to get AI response. Please try again.');
+          }
         }
       );
-      
     } catch (err) {
       setError('Failed to get AI response. Please try again.');
     } finally {
@@ -122,6 +171,26 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
       <div className="space-y-4">
         <h2 className="text-2xl font-bold text-white text-center">AI Voice Chat</h2>
         
+        {/* Language Selector */}
+        <div className="flex items-center space-x-2 bg-gray-700 p-2 rounded">
+          <Globe className="w-5 h-5 text-gray-300" />
+          <select
+            value={selectedLanguage.code}
+            onChange={(e) => {
+              const lang = SUPPORTED_LANGUAGES.find(l => l.code === e.target.value);
+              if (lang) setSelectedLanguage(lang);
+            }}
+            className="bg-gray-700 text-white flex-1 outline-none"
+            disabled={isListening}
+          >
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <option key={lang.code} value={lang.code}>
+                {lang.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {error && (
           <div className="p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded text-red-300">
             <p>{error}</p>

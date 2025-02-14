@@ -195,7 +195,7 @@ const app = new Hono()
       return ctx.json({ data: project }, 200);
     }
   )
-  .get(
+  .post(
     "/query",
     zValidator(
       "param",
@@ -204,15 +204,15 @@ const app = new Hono()
       })
     ),
     zValidator(
-      "query",
+      "json",
       z.object({
         query: z.string().min(1, "Query is required"),
-        projectId: z.string().uuid("Invalid project id"),
+        projectId: z.string(),
       })
     ),
     async (ctx) => {
       const { email } = ctx.req.valid("param");
-      const { projectId, query } = ctx.req.valid("query");
+      const { projectId, query } = ctx.req.valid("json");
 
       const [user] = await db
         .select()

@@ -206,10 +206,8 @@ const app = new Hono()
     zValidator(
       "json",
       z.object({
-
         json: z.string().min(1, "Query is required"),
         projectId: z.string().uuid("Invalid project id"),
-
       })
     ),
     async (ctx) => {
@@ -260,7 +258,7 @@ const app = new Hono()
         ),
       }));
 
-      for (const doc of results) {
+      for (const doc of updatedData) {
         context += `source: ${doc.fileName}\n, code content: ${doc.sourceCode}\n, summary of file: ${doc.summary}\n `;
       }
       const res = await chain.invoke({

@@ -60,7 +60,20 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
 
     setChat((prev) => [...prev, newChatMessage]);
 
-    const { data, output } = await getQueryAnswer(formdata.query, projectId);
+    let last3Messages = [];
+    for (let i = chat.length - 1; i > chat.length - 4 && i >= 0; i++) {
+      let msg = {
+        query: chat[i].query,
+        ai_response: chat[i].ai_response,
+      };
+      last3Messages.push(msg);
+    }
+
+    const { data, output } = await getQueryAnswer(
+      formdata.query,
+      projectId,
+      last3Messages
+    );
     setChat((prev) => {
       const updatedChat = [...prev];
       updatedChat[prev.length - 1].sources = data;

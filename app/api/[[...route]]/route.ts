@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { HTTPException } from "hono/http-exception";
 import ProjectRouter from "./project";
+import ExtensionRouter from "./extension";
 
 export const runtime = "edge";
 
@@ -19,7 +20,8 @@ export const routes = app
   .get("/", (c) => {
     return c.json({ message: "Hello Hono!" });
   })
-  .route("/:email/projects", ProjectRouter);
+  .route("/:email/projects", ProjectRouter)
+  .route("/extension", ExtensionRouter);
 
 export const GET = handle(app);
 export const POST = handle(app);

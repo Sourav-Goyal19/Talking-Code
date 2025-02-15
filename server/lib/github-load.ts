@@ -1,17 +1,17 @@
-"use server";
-
-// import { llm } from "./github";
-import { db } from "@/db/drizzle";
+import "dotenv/config";
+import { db } from "../db/drizzle";
 import { TaskType } from "@google/generative-ai";
 // import { Document } from "@langchain/core/documents";
 import {
   extensionSourceCodeEmbeddingTable,
   sourceCodeEmbeddingTable,
-} from "@/db/schema";
+} from "../db/schema";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { CohereEmbeddings } from "@langchain/cohere";
 import { ChatGroq } from "@langchain/groq";
 import { ChatAnthropic } from "@langchain/anthropic";
+import { ChatDeepSeek } from "@langchain/deepseek";
+
 // import { loadGithubRepo } from "./load-github";
 // import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
 import axios from "axios";
@@ -53,6 +53,13 @@ const llm = new ChatAnthropic({
 //   temperature: 0,
 //   maxRetries: 2,
 //   apiKey: process.env.GOOGLE_API_KEY,
+// });
+
+// const llm = new ChatGroq({
+//   model: "llama3-8b-8192",
+//   temperature: 0,
+//   maxRetries: 2,
+//   apiKey: process.env.GROQ_API_KEY,
 // });
 
 const embeddings = new GoogleGenerativeAIEmbeddings({
@@ -188,8 +195,8 @@ function parseFiles(data: string): Record<string, string> {
 
 export const generateAllEmbeddings = async (docs: Record<string, string>) => {
   const fileEntries = Object.entries(docs);
-  const batchSize = 20;
-  const delayBetweenBatches = 2000;
+  const batchSize = 15;
+  const delayBetweenBatches = 10000;
   // console.log(docs);
   let results: PromiseSettledResult<any>[] = [];
 

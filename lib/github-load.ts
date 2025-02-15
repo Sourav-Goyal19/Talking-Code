@@ -19,6 +19,7 @@ import {
   ChatGoogleGenerativeAI,
   GoogleGenerativeAIEmbeddings,
 } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 
 const summaryPrompt = ChatPromptTemplate.fromMessages([
   [
@@ -42,10 +43,15 @@ const summaryPrompt = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-const llm = new ChatAnthropic({
-  model: "claude-3-5-sonnet-20240620",
-  temperature: 0,
-  apiKey: process.env.CLAUDE_API_KEY,
+// const llm = new ChatAnthropic({
+//   model: "claude-3-5-sonnet-20240620",
+//   temperature: 0,
+//   apiKey: process.env.CLAUDE_API_KEY,
+// });
+
+const llm = new ChatOpenAI({
+  model: "gpt-4-turbo",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // const llm = new ChatGoogleGenerativeAI({

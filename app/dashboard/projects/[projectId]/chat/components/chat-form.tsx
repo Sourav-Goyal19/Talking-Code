@@ -51,6 +51,9 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
     setActiveFileIndex((prev) => ({ ...prev, [index]: idx }));
   };
 
+  const getLastMessages = () =>
+    chat.slice(-3).map(({ query, ai_response }) => ({ query, ai_response }));
+
   const onSubmit: SubmitHandler<FormType> = async (formdata) => {
     const newChatMessage: ChatMessage = {
       query: formdata.query,
@@ -59,20 +62,10 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
     };
 
     setChat((prev) => [...prev, newChatMessage]);
-
-    let last3Messages = [];
-    for (let i = chat.length - 1; i > chat.length - 4 && i >= 0; i++) {
-      let msg = {
-        query: chat[i].query,
-        ai_response: chat[i].ai_response,
-      };
-      last3Messages.push(msg);
-    }
-
     const { data, output } = await getQueryAnswer(
       formdata.query,
       projectId,
-      last3Messages
+      getLastMessages()
     );
     setChat((prev) => {
       const updatedChat = [...prev];

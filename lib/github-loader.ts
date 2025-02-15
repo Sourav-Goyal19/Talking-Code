@@ -8,7 +8,7 @@ import { sourceCodeEmbeddingTable } from "@/db/schema";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 // import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
-import { loadGithubRepo } from "./load-github";
+// import { loadGithubRepo } from "./load-github";
 import axios from "axios";
 
 const summaryPrompt = ChatPromptTemplate.fromMessages([

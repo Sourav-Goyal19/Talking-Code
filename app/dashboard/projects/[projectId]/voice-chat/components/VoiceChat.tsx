@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Mic, MicOff, Loader2, Globe } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useGetQueryResponse } from '@/features/apis/use-get-query-response';
 
 // Language interface
 interface Language {
@@ -22,7 +21,7 @@ const SUPPORTED_LANGUAGES: Language[] = [
   { code: 'hi-IN', name: 'Hindi' },
   { code: 'ja-JP', name: 'Japanese' },
   { code: 'ko-KR', name: 'Korean' },
-  { code: 'zh-CN', name: 'Chinese (Simplified)' },
+  { code: 'zh-CN', name: 'Chinese' },
   { code: 'ar-SA', name: 'Arabic' },
   { code: 'ru-RU', name: 'Russian' },
 ];
@@ -36,7 +35,6 @@ declare global {
 
 const VoiceChat = ({ projectId }: { projectId: string }) => {
   const session = useSession();
-  const queryMutation = useGetQueryResponse(session.data?.user?.email || '');
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
@@ -142,23 +140,22 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
     
     setIsLoading(true);
     try {
-      queryMutation.mutate(
-        { 
-          projectId, 
-          json: text
+      const res = await fetch(`/api/talk?projectId=${projectId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          onSuccess: (data) => {
-            console.log(data);
-            setResponse(data.output);
-            speakResponse(data.output);
-          },
-          onError: (error) => {
-            console.error(error);
-            setError('Failed to get AI response. Please try again.');
-          }
-        }
-      );
+        body: JSON.stringify({ question: text ,language: selectedLanguage.name }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to get AI response. Please try again.');
+      }
+
+      const data = await res.json();
+
+      setResponse(data.content);
+      speakResponse(data.content);
     } catch (err) {
       setError('Failed to get AI response. Please try again.');
     } finally {

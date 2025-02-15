@@ -143,6 +143,74 @@ router
       console.error("Error processing query:", error);
       res.status(500).json({ error: "Failed to process query" });
     }
+  })
+  .post("/query-stream", async (req: Request, res: Response) => {
+    try {
+      const parsed = querySchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: "Invalid input" });
+        return;
+      }
+      const { query, github_url } = parsed.data;
+
+      const [extensionProject] = await db
+        .select()
+        .from(extensionProjectsTable)
+        .where(eq(extensionProjectsTable.githubUrl, github_url));
+
+      if (!extensionProject) {
+        res.status(400).json({ error: "Extension Project does not exist" });
+        return;
+      }
+
+      const queryEmbeddings = await generateEmbeddings(query);
+
+      const results = await db
+        .select({
+          sourceCode: extensionSourceCodeEmbeddingTable.sourceCode,
+          fileName: extensionSourceCodeEmbeddingTable.fileName,
+          summary: extensionSourceCodeEmbeddingTable.summary,
+          similarity: sql<number>`1 - (${cosineDistance(
+            extensionSourceCodeEmbeddingTable.summaryEmbedding,
+            queryEmbeddings
+          )})`,
+        })
+        .from(extensionSourceCodeEmbeddingTable)
+        .where(
+          eq(
+            extensionSourceCodeEmbeddingTable.extensionProjectId,
+            extensionProject.id
+          )
+        )
+        .orderBy((t) => desc(t.similarity))
+        .limit(10);
+
+      const updatedData = results.map((item) => ({
+        ...item,
+        fileName: item.fileName.replaceAll("\\", "/"),
+        sourceCode: item.sourceCode.replaceAll(
+          "================================================",
+          ""
+        ),
+      }));
+
+      const context = updatedData
+        .map(
+          (doc) =>
+            `source: ${doc.fileName}\ncode content: ${doc.sourceCode}\nsummary: ${doc.summary}`
+        )
+        .join("\n\n");
+
+      const output = await chain.stream({ context, question: query });
+
+      for await (const chunk of output) {
+        res.write(chunk);
+      }
+      res.status(200).end();
+    } catch (error) {
+      console.error("Error processing query:", error);
+      res.status(500).json({ error: "Failed to process query" });
+    }
   });
 
 export default router;

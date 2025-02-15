@@ -11,6 +11,7 @@ import { CohereEmbeddings } from "@langchain/cohere";
 import { ChatGroq } from "@langchain/groq";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatDeepSeek } from "@langchain/deepseek";
+import { ChatOpenAI } from "@langchain/openai";
 
 // import { loadGithubRepo } from "./load-github";
 // import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
@@ -42,10 +43,15 @@ const summaryPrompt = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-const llm = new ChatAnthropic({
-  model: "claude-3-5-sonnet-20240620",
-  temperature: 0,
-  apiKey: process.env.CLAUDE_API_KEY,
+// const llm = new ChatAnthropic({
+//   model: "claude-3-5-sonnet-20240620",
+//   temperature: 0,
+//   apiKey: process.env.CLAUDE_API_KEY,
+// });
+
+const llm = new ChatOpenAI({
+  model: "gpt-4-turbo",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // const llm = new ChatGoogleGenerativeAI({
@@ -212,8 +218,19 @@ export const generateAllEmbeddings = async (docs: Record<string, string>) => {
     const batchResults = await Promise.allSettled(
       batch.map(async ([fileName, code]) => {
         try {
+          if (fileName.startsWith(".git") || fileName.startsWith("/.git")) {
+            return null;
+          }
           const summarizedCode = code.slice(0, 8000);
           const summary = await generateSummary(fileName, summarizedCode);
+          // const res = await axios.post(
+          //   `${process.env.PYTHON_BACKEND_URL}/summarize`,
+          //   {
+          //     fileName,
+          //     code: summarizedCode,
+          //   }
+          // );
+          // const summary = res.data.summary;
           if (!summary) {
             console.warn("Skipping document due to empty summary:", fileName);
             return null;

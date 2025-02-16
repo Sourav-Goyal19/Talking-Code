@@ -11,19 +11,11 @@ import {
   sourceCodeEmbeddingTable,
   usersTable,
 } from "@/db/schema";
+import axios from "axios";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import { streamSSE } from "hono/streaming";
-
-import { Ollama } from "@langchain/ollama";
-import { ChatDeepSeek } from "@langchain/deepseek";
-// const llm = new ChatDeepSeek({
-//   model: "deepseek-reasoner",
-//   temperature: 0,
-//   apiKey: process.env.DEEPSEEK_API_KEY,
-// });
+// import { ChatAnthropic } from "@langchain/anthropic";
 
 const llm = new ChatGoogleGenerativeAI({
   model: "gemini-1.5-flash",
@@ -62,13 +54,13 @@ const prompt = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-export const chain = prompt.pipe(llm).pipe(new StringOutputParser());
-
 // const llm = new ChatAnthropic({
 //   model: "claude-3-5-sonnet-20240620",
 //   temperature: 0,
 //   apiKey: process.env.CLAUDE_API_KEY,
 // });
+
+export const chain = prompt.pipe(llm).pipe(new StringOutputParser());
 
 const app = new Hono()
   .post(
@@ -101,12 +93,22 @@ const app = new Hono()
       }
 
       try {
+        const res = await axios.get(
+          `${process.env.PYTHON_BACKEND_URL}/tree?github_url=${githubUrl}`
+        );
+        if (res.status !== 200) {
+          throw new HTTPException(500, { message: "Failed to get tree" });
+        }
+        if (!res.data.tree) {
+          throw new HTTPException(500, { message: "Failed to get tree" });
+        }
         const [project] = await db
           .insert(projectsTable)
           .values({
             name: projectName,
             githubUrl,
             userId: user.id,
+            treeStructure: res.data.tree,
           })
           .returning();
 

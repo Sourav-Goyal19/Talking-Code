@@ -33,6 +33,7 @@ export const projectsTable = pgTable("projects", {
   }),
   createdAt: timestamp("created_at").defaultNow(),
   deletedAt: timestamp("deleted_at"),
+  treeStructure: text("tree_structure").notNull(),
 });
 
 export const projectsRelations = relations(projectsTable, ({ one, many }) => ({

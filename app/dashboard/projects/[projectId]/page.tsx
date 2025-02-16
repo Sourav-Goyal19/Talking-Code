@@ -8,15 +8,17 @@ import {
   SquareArrowOutUpRight,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { validate } from "uuid";
 import { eq } from "drizzle-orm";
+import { cn } from "@/lib/utils";
 import { db } from "@/db/drizzle";
 import { redirect } from "next/navigation";
-import getCurrentUser from "@/actions/getCurrentUser";
 import { Button } from "@/components/ui/button";
+import getCurrentUser from "@/actions/getCurrentUser";
 import { commitsTable, projectsTable } from "@/db/schema";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
+import Tree from "./components/tree";
+import axios from "axios";
 
 interface IndiviualProjectProps {
   params: {
@@ -54,6 +56,12 @@ const IndiviualProject: React.FC<IndiviualProjectProps> = async ({
     };
   });
 
+  // const res = await axios.get(
+  //   `${process.env.PYTHON_BACKEND_URL}/tree?github_url=${project.githubUrl}`
+  // );
+  // const treeStructure = res.data.tree;
+  // console.log(treeStructure);
+
   const features = [
     {
       icon: MessageCircleCode,
@@ -70,13 +78,13 @@ const IndiviualProject: React.FC<IndiviualProjectProps> = async ({
       button: "Let's Start",
       link: "/dashboard/projects/" + project.id + "/voice-chat",
     },
-    {
-      icon: Presentation,
-      heading: "Creat a new meeting",
-      description: "Analyze your meetings with our AI.",
-      button: "Let's Start",
-      link: "/dashboard/projects/" + project.id + "/presentation",
-    },
+    // {
+    //   icon: Presentation,
+    //   heading: "Creat a new meeting",
+    //   description: "Analyze your meetings with our AI.",
+    //   button: "Let's Start",
+    //   link: "/dashboard/projects/" + project.id + "/presentation",
+    // },
   ];
 
   return (
@@ -84,7 +92,7 @@ const IndiviualProject: React.FC<IndiviualProjectProps> = async ({
       <h2 className="text-secondary-foreground/70 text-3xl font-semibold mb-2 capitalize">
         {project.name}
       </h2>
-      <p className="bg-slate-200 w-fit rounded-full py-2 px-4 leading-4 text-black flex items-center flex-wrap font-semibold mb-7">
+      <p className="bg-slate-200 w-fit rounded-full py-2 px-4 leading-4 text-black flex items-center flex-wrap font-semibold mb-7 text-wrap whitespace-pre-line">
         <Github className="size-5 mr-1" /> Your project repository is{" "}
         <Link
           href={project.githubUrl}
@@ -95,24 +103,29 @@ const IndiviualProject: React.FC<IndiviualProjectProps> = async ({
           <SquareArrowOutUpRight className="size-4 ml-1 hover:underline" />
         </Link>
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {features.map((feature) => (
-          <div
-            key={feature.heading}
-            className="h-72 border shadow-lg bg-custom2 rounded-2xl flex flex-col items-center justify-center px-7 text-center"
-          >
-            <feature.icon className="size-20" />
-            <p className="mt-2 text-xl tracking-wide">{feature.heading}</p>
-            <p className="text-lg mb-5 text-secondary-foreground/60">
-              {feature.description}
-            </p>
-            <Link href={feature.link}>
-              <Button className="text-foreground text-base tracking-wide">
-                {feature.button} <ArrowRight className="size-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-6 items-center">
+          {features.map((feature) => (
+            <div
+              key={feature.heading}
+              className="h-72 md:max-w-[90%] !w-full border shadow-lg bg-custom2 rounded-2xl flex flex-col items-center justify-center px-7 text-center"
+            >
+              <feature.icon className="size-20" />
+              <p className="mt-2 text-xl tracking-wide">{feature.heading}</p>
+              <p className="text-lg mb-5 text-secondary-foreground/60">
+                {feature.description}
+              </p>
+              <Link href={feature.link}>
+                <Button className="text-foreground text-base tracking-wide">
+                  {feature.button} <ArrowRight className="size-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          ))}
+        </div>
+        <div className="border bg-zinc-900 max-h-[38rem] shadow-lg rounded-2xl flex flex-col items-center justify-center text-center">
+          <Tree data={project.treeStructure} />
+        </div>
       </div>
       <div className="mt-8">
         <h2 className="text-secondary-foreground/70 text-3xl font-semibold mb-2 capitalize">
@@ -138,7 +151,7 @@ const IndiviualProject: React.FC<IndiviualProjectProps> = async ({
                   className="rounded-full relative mt-6 size-8 flex-none bg-gray-500"
                 />
               </>
-              <div className="flex-auto border shadow bg-custom2 rounded-md mt-4 p-4">
+              <div className="flex-auto !text-wrap w-full overflow-auto border shadow bg-custom2 rounded-md mt-4 p-4">
                 <div className="flex items-center">
                   <Link
                     href={`${project.githubUrl}/commit/${commit.commitHash}`}

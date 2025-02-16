@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub Kanban Query",
+  "version": "1.0",
+  "description": "A Chrome extension to query GitHub repositories",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_popup": "dist/popup.html",
+    "default_icon": {
+      "16": "dist/assets/icon16.png",
+      "48": "dist/assets/icon48.png",
+      "128": "dist/assets/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "dist/assets/icon16.png",
+    "48": "dist/assets/icon48.png",
+    "128": "dist/assets/icon128.png"
+  },
+  "host_permissions": ["https://*.github.com/*", "http://localhost:4000/*"]
+}

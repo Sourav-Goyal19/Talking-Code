@@ -41,7 +41,10 @@ router
         .where(eq(extensionProjectsTable.githubUrl, github_url));
 
       if (existingProject) {
-        res.status(400).json({ error: "Extension Project already exists" });
+        res.status(200).json({
+          message: "Extension project already exists",
+          project: existingProject,
+        });
         return;
       }
 

@@ -58,9 +58,7 @@ router
       }
 
       try {
-        extensionIndexGithubRepo(newExtensionProject.id, github_url)
-          .then((res) => console.log(res))
-          .catch((err) => console.log(err));
+        await extensionIndexGithubRepo(newExtensionProject.id, github_url);
       } catch (error) {
         console.log(error);
         await db
@@ -70,7 +68,7 @@ router
         return;
       }
 
-      res.status(201).json({
+      res.status(200).json({
         message: "Extension project created successfully",
         project: newExtensionProject,
       });
@@ -80,6 +78,7 @@ router
     }
   })
   .post("/query", async (req: Request, res: Response) => {
+    console.log("Request to /query");
     try {
       const parsed = querySchema.safeParse(req.body);
       if (!parsed.success) {
@@ -138,13 +137,14 @@ router
 
       const output = await chain.invoke({ context, question: query });
 
-      res.status(200).json({ data: updatedData, output });
+      res.status(200).json({ output });
     } catch (error) {
       console.error("Error processing query:", error);
       res.status(500).json({ error: "Failed to process query" });
     }
   })
   .post("/query-stream", async (req: Request, res: Response) => {
+    console.log("Request to /query-stream");
     try {
       const parsed = querySchema.safeParse(req.body);
       if (!parsed.success) {

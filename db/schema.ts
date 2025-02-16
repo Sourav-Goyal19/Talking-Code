@@ -125,7 +125,7 @@ export const extensionSourceCodeEmbeddingTable = pgTable(
   "extension_source_code_embeddings",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    sourceEmbeddings: vector("source_embeddings", { dimensions: 768 }),
+    summaryEmbeddings: vector("summary_embeddings", { dimensions: 768 }),
     sourceCode: text("source_code").notNull(),
     fileName: text("file_name").notNull(),
     summary: text("summary").notNull(),

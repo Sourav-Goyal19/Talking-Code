@@ -7,10 +7,10 @@ import {
   sourceCodeEmbeddingTable,
 } from "../db/schema";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { CohereEmbeddings } from "@langchain/cohere";
-import { ChatGroq } from "@langchain/groq";
-import { ChatAnthropic } from "@langchain/anthropic";
-import { ChatDeepSeek } from "@langchain/deepseek";
+// import { CohereEmbeddings } from "@langchain/cohere";
+// import { ChatGroq } from "@langchain/groq";
+// import { ChatAnthropic } from "@langchain/anthropic";
+// import { ChatDeepSeek } from "@langchain/deepseek";
 import { ChatOpenAI } from "@langchain/openai";
 
 // import { loadGithubRepo } from "./load-github";

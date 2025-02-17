@@ -1,1 +1,0 @@
-CREATE INDEX IF NOT EXISTS "embeddingIndex" ON "source_code_embedding" USING hnsw ("summary_embedding" vector_cosine_ops);

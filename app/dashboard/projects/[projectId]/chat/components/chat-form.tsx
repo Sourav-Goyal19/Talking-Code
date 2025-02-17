@@ -2,18 +2,18 @@
 import { z } from "zod";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import MDEditor from "@uiw/react-md-editor";
+import { readStreamableValue } from "ai/rsc";
 import { useSession } from "next-auth/react";
 import { ArrowUp, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
+import { getQueryAnswer } from "@/lib/query-answer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
-import { getQueryAnswer } from "@/lib/query-answer";
-import { readStreamableValue } from "ai/rsc";
-import MDEditor from "@uiw/react-md-editor";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { atomDark as editorTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface ChatFormProps {

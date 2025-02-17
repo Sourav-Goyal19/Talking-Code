@@ -33,6 +33,7 @@ export const projectsTable = pgTable("projects", {
   }),
   createdAt: timestamp("created_at").defaultNow(),
   deletedAt: timestamp("deleted_at"),
+  treeStructure: text("tree_structure").notNull(),
 });
 
 export const projectsRelations = relations(projectsTable, ({ one, many }) => ({
@@ -44,7 +45,7 @@ export const projectsRelations = relations(projectsTable, ({ one, many }) => ({
   sourceCodeEmbedding: many(sourceCodeEmbeddingTable),
 }));
 
-// export const insertProjectsSchema = createInsertSchema(projectsTable);
+export const insertProjectsSchema = createInsertSchema(projectsTable);
 
 export const commitsTable = pgTable("commits", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -68,7 +69,7 @@ export const commitsRelations = relations(commitsTable, ({ one }) => ({
   }),
 }));
 
-// export const insertCommitsSchema = createInsertSchema(commitsTable);
+export const insertCommitsSchema = createInsertSchema(commitsTable);
 
 export const sourceCodeEmbeddingTable = pgTable(
   "source_code_embedding",
@@ -125,7 +126,7 @@ export const extensionSourceCodeEmbeddingTable = pgTable(
   "extension_source_code_embeddings",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    summaryEmbedding: vector("summary_embeddings", { dimensions: 768 }),
+    summaryEmbeddings: vector("summary_embeddings", { dimensions: 768 }),
     sourceCode: text("source_code").notNull(),
     fileName: text("file_name").notNull(),
     summary: text("summary").notNull(),

@@ -1,8 +1,7 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import MDEditor from "@uiw/react-md-editor";
-import { Copy } from "lucide-react";
 import { toast } from "sonner";
+import { Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark as editorTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
 

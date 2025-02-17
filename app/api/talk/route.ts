@@ -46,7 +46,16 @@ export async function POST(request: NextRequest) {
       .orderBy((t) => desc(t.similarity))
       .limit(10);
 
-    for (const doc of results) {
+    const updatedData = results.map((item) => ({
+      ...item,
+      fileName: item.fileName.replaceAll("\\", "/"),
+      sourceCode: item.sourceCode.replace(
+        "================================================",
+        ""
+      ),
+    }));
+
+    for (const doc of updatedData) {
       context += `source: ${doc.fileName}\n, code content: ${doc.sourceCode}\n, summary of file: ${doc.summary}\n `;
     }
 

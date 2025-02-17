@@ -1,29 +1,40 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Mic, MicOff, Loader2, Globe } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect } from "react";
+import { Mic, MicOff, Loader2, Globe } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LiveAudioVisualizer } from "react-audio-visualize";
+import { cn } from "@/lib/utils";
 
-// Language interface
 interface Language {
   code: string;
   name: string;
-  voiceName?: string; 
+  voiceName?: string;
 }
 
 const SUPPORTED_LANGUAGES: Language[] = [
-  { code: 'en-US', name: 'English (US)' },
-  { code: 'es-ES', name: 'Spanish' },
-  { code: 'fr-FR', name: 'French' },
-  { code: 'de-DE', name: 'German' },
-  { code: 'it-IT', name: 'Italian' },
-  { code: 'pt-PT', name: 'Portuguese' },
-  { code: 'hi-IN', name: 'Hindi' },
-  { code: 'ja-JP', name: 'Japanese' },
-  { code: 'ko-KR', name: 'Korean' },
-  { code: 'zh-CN', name: 'Chinese' },
-  { code: 'ar-SA', name: 'Arabic' },
-  { code: 'ru-RU', name: 'Russian' },
+  { code: "en-US", name: "English (US)" },
+  { code: "es-ES", name: "Spanish" },
+  { code: "fr-FR", name: "French" },
+  { code: "de-DE", name: "German" },
+  { code: "it-IT", name: "Italian" },
+  { code: "pt-PT", name: "Portuguese" },
+  { code: "hi-IN", name: "Hindi" },
+  { code: "ja-JP", name: "Japanese" },
+  { code: "ko-KR", name: "Korean" },
+  { code: "zh-CN", name: "Chinese" },
+  { code: "ar-SA", name: "Arabic" },
+  { code: "ru-RU", name: "Russian" },
 ];
 
 declare global {
@@ -33,15 +44,22 @@ declare global {
   }
 }
 
-const VoiceChat = ({ projectId }: { projectId: string }) => {
+export default function VoiceChat({ projectId }: { projectId: string }) {
   const session = useSession();
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>(SUPPORTED_LANGUAGES[0]);
-  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [response, setResponse] = useState("");
+  const [error, setError] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(
+    SUPPORTED_LANGUAGES[0]
+  );
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
+    null
+  );
+  const [availableVoices, setAvailableVoices] = useState<
+    SpeechSynthesisVoice[]
+  >([]);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -56,14 +74,27 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (
+      !("webkitSpeechRecognition" in window) &&
+      !("SpeechRecognition" in window)
+    ) {
+      setError(
+        "Speech recognition is not supported. Please use Chrome or Edge."
+      );
+    }
+  }, []);
+
   const getBestVoiceForLanguage = (langCode: string) => {
     const voices = availableVoices;
     const nativeVoice = voices.find(
-      voice => voice.lang.toLowerCase().includes(langCode.toLowerCase()) && voice.localService
+      (voice) =>
+        voice.lang.toLowerCase().includes(langCode.toLowerCase()) &&
+        voice.localService
     );
 
-    const anyVoice = voices.find(
-      voice => voice.lang.toLowerCase().includes(langCode.toLowerCase())
+    const anyVoice = voices.find((voice) =>
+      voice.lang.toLowerCase().includes(langCode.toLowerCase())
     );
     return nativeVoice || anyVoice || voices[0];
   };
@@ -76,25 +107,20 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
     window.speechSynthesis.speak(utterance);
   };
 
-  useEffect(() => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setError('Speech recognition is not supported. Please use Chrome or Edge.');
-    }
-  }, []);
-
   const toggleListening = async () => {
     try {
-      setError('');
-      
+      setError("");
+
       if (isListening) {
         setIsListening(false);
         return;
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
 
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+      const SpeechRecognition =
+        window.webkitSpeechRecognition || window.SpeechRecognition;
       const recognition = new SpeechRecognition();
 
       recognition.lang = selectedLanguage.code;
@@ -103,7 +129,7 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
 
       recognition.onstart = () => {
         setIsListening(true);
-        setTranscript('');
+        setTranscript("");
       };
 
       recognition.onresult = (event: any) => {
@@ -113,10 +139,14 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
       };
 
       recognition.onerror = (event: any) => {
-        if (event.error === 'not-allowed') {
-          setError('Microphone access denied. Please allow microphone access and try again.');
-        } else if (event.error === 'network') {
-          setError('Network error. Please check your connection and try again.');
+        if (event.error === "not-allowed") {
+          setError(
+            "Microphone access denied. Please allow microphone access and try again."
+          );
+        } else if (event.error === "network") {
+          setError(
+            "Network error. Please check your connection and try again."
+          );
         } else {
           setError(`Error: ${event.error}`);
         }
@@ -129,27 +159,32 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
 
       recognition.start();
     } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to access microphone. Please ensure microphone permissions are granted.');
+      console.error("Error:", err);
+      setError(
+        "Failed to access microphone. Please ensure microphone permissions are granted."
+      );
       setIsListening(false);
     }
   };
 
   const handleSubmit = async (text: string) => {
     if (!text.trim()) return;
-    
+
     setIsLoading(true);
     try {
       const res = await fetch(`/api/talk?projectId=${projectId}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ question: text ,language: selectedLanguage.name }),
+        body: JSON.stringify({
+          question: text,
+          language: selectedLanguage.name,
+        }),
       });
 
       if (!res.ok) {
-        throw new Error('Failed to get AI response. Please try again.');
+        throw new Error("Failed to get AI response. Please try again.");
       }
 
       const data = await res.json();
@@ -157,86 +192,114 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
       setResponse(data.content);
       speakResponse(data.content);
     } catch (err) {
-      setError('Failed to get AI response. Please try again.');
+      setError("Failed to get AI response. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto bg-gray-800 rounded-xl shadow-md">
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-white text-center">AI Voice Chat</h2>
-        
-        {/* Language Selector */}
-        <div className="flex items-center space-x-2 bg-gray-700 p-2 rounded">
-          <Globe className="w-5 h-5 text-gray-300" />
-          <select
-            value={selectedLanguage.code}
-            onChange={(e) => {
-              const lang = SUPPORTED_LANGUAGES.find(l => l.code === e.target.value);
-              if (lang) setSelectedLanguage(lang);
-            }}
-            className="bg-gray-700 text-white flex-1 outline-none"
-            disabled={isListening}
-          >
-            {SUPPORTED_LANGUAGES.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.name}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Card className="h-full lg:h-36 overflow-auto">
+          <CardHeader>
+            <CardTitle className="text-primary tracking-wide">
+              AI voice chat
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-start w-fit gap-7 flex-wrap">
+            <div className="flex items-center justify-start w-fit gap-4">
+              <Select
+                value={selectedLanguage.code}
+                onValueChange={(value) => {
+                  const lang = SUPPORTED_LANGUAGES.find(
+                    (l) => l.code === value
+                  );
+                  if (lang) setSelectedLanguage(lang);
+                }}
+                disabled={isLoading || isListening}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      <div className="flex items-center">
+                        {/* <Globe className="w-4 h-4 mr-2" /> */}
+                        {lang.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        {error && (
-          <div className="p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded text-red-300">
-            <p>{error}</p>
-          </div>
-        )}
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-        <button
-          onClick={toggleListening}
-          disabled={isLoading}
-          className={`w-full p-4 rounded-lg flex items-center justify-center space-x-2 
-            ${isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} 
-            text-white transition-colors disabled:opacity-50`}
-        >
-          {isListening ? (
-            <>
-              <MicOff className="w-6 h-6" />
-              <span>Stop Listening</span>
-            </>
-          ) : (
-            <>
-              <Mic className="w-6 h-6" />
-              <span>Start Speaking</span>
-            </>
-          )}
-        </button>
+              <Button
+                onClick={toggleListening}
+                disabled={isLoading}
+                variant={isListening ? "destructive" : "default"}
+                className="w-full text-foreground"
+              >
+                {isListening ? (
+                  <>
+                    <MicOff className="w-4 h-4 mr-2" />
+                    Stop Listening
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-4 h-4 mr-2" />
+                    Start Speaking
+                  </>
+                )}
+              </Button>
+            </div>
 
+            {isLoading && (
+              <p className="flex items-center space-x-2 text-primary">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <p className="w-fit">Generating AI response...</p>
+              </p>
+            )}
+          </CardContent>
+        </Card>
         {transcript && (
-          <div className="p-3 bg-gray-700 rounded">
-            <p className="text-gray-300 font-medium">You said:</p>
-            <p className="text-white">{transcript}</p>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="flex items-center justify-center space-x-2 text-blue-400">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Getting AI response...</span>
-          </div>
-        )}
-
-        {response && (
-          <div className="p-3 bg-gray-700 rounded">
-            <p className="text-gray-300 font-medium">AI Response:</p>
-            <p className="text-white">{response}</p>
-          </div>
+          <Card
+            className={cn(
+              "h-full lg:h-36 overflow-auto",
+              isLoading && "opacity-80"
+            )}
+          >
+            <CardHeader>
+              <CardTitle className="text-rose-700 tracking-wide">
+                You said:
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="uppercase text-base tracking-wider">{transcript}</p>
+            </CardContent>
+          </Card>
         )}
       </div>
+      {response && (
+        <Card
+          className={cn("w-full overflow-auto mt-5", isLoading && "opacity-80")}
+        >
+          <CardHeader>
+            <CardTitle className="text-green-700 tracking-wide">
+              AI Response:
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="tracking-wider text-lg">{response}</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
-};
-
-export default VoiceChat;
+}

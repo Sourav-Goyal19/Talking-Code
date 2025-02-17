@@ -110,7 +110,7 @@ router
           fileName: extensionSourceCodeEmbeddingTable.fileName,
           summary: extensionSourceCodeEmbeddingTable.summary,
           similarity: sql<number>`1 - (${cosineDistance(
-            extensionSourceCodeEmbeddingTable.summaryEmbedding,
+            extensionSourceCodeEmbeddingTable.summaryEmbeddings,
             queryEmbeddings
           )})`,
         })
@@ -176,7 +176,7 @@ router
           fileName: extensionSourceCodeEmbeddingTable.fileName,
           summary: extensionSourceCodeEmbeddingTable.summary,
           similarity: sql<number>`1 - (${cosineDistance(
-            extensionSourceCodeEmbeddingTable.summaryEmbedding,
+            extensionSourceCodeEmbeddingTable.summaryEmbeddings,
             queryEmbeddings
           )})`,
         })
@@ -221,19 +221,29 @@ router
     console.log("Request to /query-with-translation");
     try {
       const data = req.body;
-      const projectId = req.query.projectId as string;
+      const github_url = data.github_url as string;
 
       const translateToEnglish = await genAI
         .getGenerativeModel({ model: "gemini-pro" })
-        .generateContent(`Translate this to English: ${data.question}`);
+        .generateContent(`Translate this to English: ${data.query}`);
 
       const englishText = translateToEnglish.response.text();
       const questionEmbedding = await generateEmbeddings(englishText || "");
 
+      const [existingExtensionProject] = await db
+        .select()
+        .from(extensionProjectsTable)
+        .where(eq(extensionProjectsTable.githubUrl, github_url));
+
+      if (!existingExtensionProject) {
+        res.status(400).json({ error: "Extension project doesn't exist" });
+        return;
+      }
+
       let context = "";
 
       const similarity = sql<number>`1-(${cosineDistance(
-        extensionSourceCodeEmbeddingTable.summaryEmbedding,
+        extensionSourceCodeEmbeddingTable.summaryEmbeddings,
         questionEmbedding
       )})`;
 
@@ -247,7 +257,10 @@ router
         .from(extensionSourceCodeEmbeddingTable)
         .where(
           and(
-            eq(extensionSourceCodeEmbeddingTable.extensionProjectId, projectId),
+            eq(
+              extensionSourceCodeEmbeddingTable.extensionProjectId,
+              existingExtensionProject.id
+            ),
             gt(similarity, 0.5)
           )
         )

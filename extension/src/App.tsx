@@ -210,7 +210,7 @@ function App() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask any query regarding the repo..."
+            placeholder="Ask any query!"
             className="query-input"
             disabled={isLoading}
           />

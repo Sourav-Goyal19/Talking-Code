@@ -231,7 +231,7 @@ const app = new Hono()
       let context = "";
 
       const similarity = sql<number>`1-(${cosineDistance(
-        sourceCodeEmbeddingTable.summaryEmbeddings,
+        sourceCodeEmbeddingTable.summaryEmbedding,
         queryVector
       )})`;
 

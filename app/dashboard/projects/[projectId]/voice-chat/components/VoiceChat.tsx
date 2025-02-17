@@ -1,29 +1,29 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Mic, MicOff, Loader2, Globe } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect } from "react";
+import { Mic, MicOff, Loader2, Globe } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 // Language interface
 interface Language {
   code: string;
   name: string;
-  voiceName?: string; 
+  voiceName?: string;
 }
 
 const SUPPORTED_LANGUAGES: Language[] = [
-  { code: 'en-US', name: 'English (US)' },
-  { code: 'es-ES', name: 'Spanish' },
-  { code: 'fr-FR', name: 'French' },
-  { code: 'de-DE', name: 'German' },
-  { code: 'it-IT', name: 'Italian' },
-  { code: 'pt-PT', name: 'Portuguese' },
-  { code: 'hi-IN', name: 'Hindi' },
-  { code: 'ja-JP', name: 'Japanese' },
-  { code: 'ko-KR', name: 'Korean' },
-  { code: 'zh-CN', name: 'Chinese' },
-  { code: 'ar-SA', name: 'Arabic' },
-  { code: 'ru-RU', name: 'Russian' },
+  { code: "en-US", name: "  " },
+  { code: "es-ES", name: "Spanish" },
+  { code: "fr-FR", name: "French" },
+  { code: "de-DE", name: "German" },
+  { code: "it-IT", name: "Italian" },
+  { code: "pt-PT", name: "Portuguese" },
+  { code: "hi-IN", name: "Hindi" },
+  { code: "ja-JP", name: "Japanese" },
+  { code: "ko-KR", name: "Korean" },
+  { code: "zh-CN", name: "Chinese" },
+  { code: "ar-SA", name: "Arabic" },
+  { code: "ru-RU", name: "Russian" },
 ];
 
 declare global {
@@ -36,12 +36,16 @@ declare global {
 const VoiceChat = ({ projectId }: { projectId: string }) => {
   const session = useSession();
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [response, setResponse] = useState('');
+  const [transcript, setTranscript] = useState("");
+  const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>(SUPPORTED_LANGUAGES[0]);
-  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [error, setError] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(
+    SUPPORTED_LANGUAGES[0]
+  );
+  const [availableVoices, setAvailableVoices] = useState<
+    SpeechSynthesisVoice[]
+  >([]);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -59,11 +63,13 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
   const getBestVoiceForLanguage = (langCode: string) => {
     const voices = availableVoices;
     const nativeVoice = voices.find(
-      voice => voice.lang.toLowerCase().includes(langCode.toLowerCase()) && voice.localService
+      (voice) =>
+        voice.lang.toLowerCase().includes(langCode.toLowerCase()) &&
+        voice.localService
     );
 
-    const anyVoice = voices.find(
-      voice => voice.lang.toLowerCase().includes(langCode.toLowerCase())
+    const anyVoice = voices.find((voice) =>
+      voice.lang.toLowerCase().includes(langCode.toLowerCase())
     );
     return nativeVoice || anyVoice || voices[0];
   };
@@ -77,24 +83,30 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
   };
 
   useEffect(() => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setError('Speech recognition is not supported. Please use Chrome or Edge.');
+    if (
+      !("webkitSpeechRecognition" in window) &&
+      !("SpeechRecognition" in window)
+    ) {
+      setError(
+        "Speech recognition is not supported. Please use Chrome or Edge."
+      );
     }
   }, []);
 
   const toggleListening = async () => {
     try {
-      setError('');
-      
+      setError("");
+
       if (isListening) {
         setIsListening(false);
         return;
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
 
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+      const SpeechRecognition =
+        window.webkitSpeechRecognition || window.SpeechRecognition;
       const recognition = new SpeechRecognition();
 
       recognition.lang = selectedLanguage.code;
@@ -103,7 +115,7 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
 
       recognition.onstart = () => {
         setIsListening(true);
-        setTranscript('');
+        setTranscript("");
       };
 
       recognition.onresult = (event: any) => {
@@ -113,10 +125,14 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
       };
 
       recognition.onerror = (event: any) => {
-        if (event.error === 'not-allowed') {
-          setError('Microphone access denied. Please allow microphone access and try again.');
-        } else if (event.error === 'network') {
-          setError('Network error. Please check your connection and try again.');
+        if (event.error === "not-allowed") {
+          setError(
+            "Microphone access denied. Please allow microphone access and try again."
+          );
+        } else if (event.error === "network") {
+          setError(
+            "Network error. Please check your connection and try again."
+          );
         } else {
           setError(`Error: ${event.error}`);
         }
@@ -129,27 +145,32 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
 
       recognition.start();
     } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to access microphone. Please ensure microphone permissions are granted.');
+      console.error("Error:", err);
+      setError(
+        "Failed to access microphone. Please ensure microphone permissions are granted."
+      );
       setIsListening(false);
     }
   };
 
   const handleSubmit = async (text: string) => {
     if (!text.trim()) return;
-    
+
     setIsLoading(true);
     try {
       const res = await fetch(`/api/talk?projectId=${projectId}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ question: text ,language: selectedLanguage.name }),
+        body: JSON.stringify({
+          question: text,
+          language: selectedLanguage.name,
+        }),
       });
 
       if (!res.ok) {
-        throw new Error('Failed to get AI response. Please try again.');
+        throw new Error("Failed to get AI response. Please try again.");
       }
 
       const data = await res.json();
@@ -157,7 +178,7 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
       setResponse(data.content);
       speakResponse(data.content);
     } catch (err) {
-      setError('Failed to get AI response. Please try again.');
+      setError("Failed to get AI response. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -166,15 +187,19 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
   return (
     <div className="p-6 max-w-md mx-auto bg-gray-800 rounded-xl shadow-md">
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-white text-center">AI Voice Chat</h2>
-        
+        <h2 className="text-2xl font-bold text-white text-center">
+          AI Voice Chat
+        </h2>
+
         {/* Language Selector */}
         <div className="flex items-center space-x-2 bg-gray-700 p-2 rounded">
           <Globe className="w-5 h-5 text-gray-300" />
           <select
             value={selectedLanguage.code}
             onChange={(e) => {
-              const lang = SUPPORTED_LANGUAGES.find(l => l.code === e.target.value);
+              const lang = SUPPORTED_LANGUAGES.find(
+                (l) => l.code === e.target.value
+              );
               if (lang) setSelectedLanguage(lang);
             }}
             className="bg-gray-700 text-white flex-1 outline-none"
@@ -198,7 +223,11 @@ const VoiceChat = ({ projectId }: { projectId: string }) => {
           onClick={toggleListening}
           disabled={isLoading}
           className={`w-full p-4 rounded-lg flex items-center justify-center space-x-2 
-            ${isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} 
+            ${
+              isListening
+                ? "bg-red-500 hover:bg-red-600"
+                : "bg-blue-500 hover:bg-blue-600"
+            } 
             text-white transition-colors disabled:opacity-50`}
         >
           {isListening ? (

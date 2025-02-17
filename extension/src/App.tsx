@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import "./App.css";
 
 interface Message {
   id: number;
@@ -146,80 +147,74 @@ function App() {
   };
 
   if (initialError) {
-    return <div className="p-4 text-red-500">Error: {initialError}</div>;
+    return <div className="error-message">Error: {initialError}</div>;
   }
 
   if (!currentUrl) {
-    return <div className="p-4">Loading...</div>;
+    return <div className="loading-message">Loading...</div>;
   }
 
   return (
-    <div className="flex flex-col h-[400px] w-[300px] bg-gray-50">
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Talk to Code</h2>
-        <p className="text-sm text-gray-600 truncate">
+    <div className="popup-container">
+      <div className="popup-header">
+        <h2 className="popup-title">Talk to Code</h2>
+        <p className="repo-info">
           Repo:{" "}
           <a
             href={currentUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-blue-600"
+            className="repo-link"
           >
             {currentUrl}
           </a>
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="messages-container">
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${
-              message.isUser ? "justify-end" : "justify-start"
+            className={`message-wrapper ${
+              message.isUser ? "user-message" : "assistant-message"
             }`}
           >
             <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                message.isUser
-                  ? "bg-blue-500 text-white"
-                  : "bg-white border border-gray-200"
+              className={`message-bubble ${
+                message.isUser ? "user" : "assistant"
               }`}
             >
-              <p className="text-sm">{message.content}</p>
-              <p className="text-xs mt-1 opacity-70">
+              <p className="message-content">{message.content}</p>
+              <p className="message-timestamp">
                 {message.timestamp.toLocaleTimeString()}
               </p>
             </div>
           </div>
         ))}
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <div className="flex space-x-2 items-center">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+          <div className="loading-indicator">
+            <div className="loading-bubble">
+              <div className="loading-dots">
+                <div className="loading-dot"></div>
+                <div className="loading-dot"></div>
+                <div className="loading-dot"></div>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t">
-        <div className="flex space-x-2">
+      <form onSubmit={handleSubmit} className="input-form">
+        <div className="input-group">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ask any query regarding the repo..."
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="query-input"
             disabled={isLoading}
           />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-          >
+          <button type="submit" disabled={isLoading} className="submit-button">
             Send
           </button>
         </div>

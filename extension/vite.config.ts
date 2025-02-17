@@ -13,6 +13,7 @@ export default defineConfig({
       input: {
         popup: "./popup.html",
       },
+      external: ["App.css"],
     },
   },
 });

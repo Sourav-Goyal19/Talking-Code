@@ -210,6 +210,9 @@ export const generateAllEmbeddings = async (docs: Record<string, string>) => {
 
     const batchResults = await Promise.allSettled(
       batch.map(async ([fileName, code]) => {
+        if (fileName.startsWith("/.git")) {
+          return null;
+        }
         try {
           const summarizedCode = code.slice(0, 8000);
           const summary = await generateSummary(fileName, summarizedCode);

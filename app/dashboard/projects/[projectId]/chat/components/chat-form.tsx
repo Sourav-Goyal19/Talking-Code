@@ -63,68 +63,36 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
       sources: [],
     };
 
-    setChat((prev) => [...prev, newChatMessage]);
-
-    console.log(process.env.BACKEND_URL);
-
     try {
-      // const response = await fetch(
-      //   `${process.env.BACKEND_URL}/api/project/query-stream`,
-      //   {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({
-      //       query: formdata.query,
-      //       projectId,
-      //       last3Messages: getLastMessages(),
-      //     }),
-      //   }
-      // );
-      const response = await fetch(
-        `http://localhost:4000/api/project/query-stream`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: formdata.query,
-            projectId,
-            last3Messages: getLastMessages(),
-          }),
-        }
+      setChat((prev) => [...prev, newChatMessage]);
+      const { data, output } = await getQueryAnswer(
+        formdata.query,
+        projectId,
+        getLastMessages()
       );
-
-      console.log(response);
-      if (!response.ok) {
-        throw new Error("Failed to get ai response");
-      }
-      if (!response.body) {
-        throw new Error("Server is busy right now.");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
+      setChat((prev) => {
+        const updatedChat = [...prev];
+        updatedChat[prev.length - 1].sources = data;
+        return updatedChat;
+      });
+      for await (const text of readStreamableValue(output)) {
         setChat((prev) => {
-          const lastMessage = prev[prev.length - 1];
-          lastMessage.ai_response += chunk;
-          const prevAll = prev.slice(0, -2);
-          return [...prevAll, lastMessage];
+          const updatedChat = [...prev];
+          const lastIndex = updatedChat.length - 1;
+
+          if (lastIndex >= 0) {
+            updatedChat[lastIndex] = {
+              ...updatedChat[lastIndex],
+              ai_response: updatedChat[lastIndex].ai_response + text,
+            };
+          }
+
+          return updatedChat;
         });
       }
     } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong");
-      setChat((prev) => [...prev.slice(0, -2)]);
-      form.setValue("query", formdata.query);
+      console.error(error);
+      toast.error("Something went wrong. Please try again later.");
     }
   };
 
@@ -152,16 +120,17 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
             <div className="space-y-3 border rounded-md shadow-xl bg-custom2 py-2 px-4">
               <MDEditor.Markdown
                 source={ct.ai_response || "Thinking......."}
-                className="w-full !h-full max-h-[60vh] overflow-auto text-foreground bg-transparent text-base border-b-2 border-white pb-10"
+                className="w-full !h-full max-h-[60vh] overflow-auto text-primary bg-transparent text-base border-b-2 border-white pb-10 "
                 style={{
                   background: "transparent",
-                  fontSize: "1rem",
-                  lineHeight: "1.5rem",
+                  fontSize: "1.1rem",
+                  lineHeight: "1.7rem",
+                  letterSpacing: "0.025em",
                 }}
               />
               <div ref={markdownRef} />
               <div className="flex items-center bg-custom1 rounded overflow-auto no-scrollbar gap-2">
-                {ct?.sources.map((an, idx) => (
+                {ct.sources.map((an, idx) => (
                   <p
                     key={idx}
                     className={cn(
@@ -175,7 +144,7 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
                   </p>
                 ))}
               </div>
-              {ct?.sources.map((an, idx) => (
+              {ct.sources.map((an, idx) => (
                 <div key={idx}>
                   {activeFileIndex[index] === idx && (
                     <SyntaxHighlighter

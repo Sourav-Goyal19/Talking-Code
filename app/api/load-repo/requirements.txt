@@ -1,2 +1,9 @@
-gitingest
+langchain
 Flask
+langchain-openai
+langchain-core
+langchain-community
+gitingest
+langchain-sambanova
+langchain-google-genai
+langchain-ollama

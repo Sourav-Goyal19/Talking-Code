@@ -28,9 +28,11 @@ export const projectsTable = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   githubUrl: text("github_url").notNull(),
-  userId: uuid("user_id").references(() => usersTable.id, {
-    onDelete: "cascade",
-  }),
+  userId: uuid("user_id")
+    .references(() => usersTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   deletedAt: timestamp("deleted_at"),
   treeStructure: text("tree_structure").notNull(),
@@ -49,9 +51,11 @@ export const insertProjectsSchema = createInsertSchema(projectsTable);
 
 export const commitsTable = pgTable("commits", {
   id: uuid("id").defaultRandom().primaryKey(),
-  projectId: uuid("project_id").references(() => projectsTable.id, {
-    onDelete: "cascade",
-  }),
+  projectId: uuid("project_id")
+    .references(() => projectsTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   commitMessage: text("commit_message").notNull(),
@@ -80,9 +84,11 @@ export const sourceCodeEmbeddingTable = pgTable(
     summary: text("summary").notNull(),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
-    projectId: uuid("project_id").references(() => projectsTable.id, {
-      onDelete: "cascade",
-    }),
+    projectId: uuid("project_id")
+      .references(() => projectsTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     summaryEmbedding: vector("summary_embedding", { dimensions: 768 }),
   },
   // (table) => [
@@ -130,12 +136,11 @@ export const extensionSourceCodeEmbeddingTable = pgTable(
     sourceCode: text("source_code").notNull(),
     fileName: text("file_name").notNull(),
     summary: text("summary").notNull(),
-    extensionProjectId: uuid("extension_projectId").references(
-      () => extensionProjectsTable.id,
-      {
+    extensionProjectId: uuid("extension_projectId")
+      .references(() => extensionProjectsTable.id, {
         onDelete: "cascade",
-      }
-    ),
+      })
+      .notNull(),
     createdAt: timestamp("created_at").defaultNow(),
   }
 );

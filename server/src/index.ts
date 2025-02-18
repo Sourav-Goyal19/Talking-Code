@@ -1,10 +1,18 @@
 import "dotenv/config";
 import express from "express";
 import ExtensionRouter from "./routes/extension";
+import ProjectRouter from "./routes/project";
+import cors from "cors";
 
 const PORT = process.env.PORT || 4000;
 
 const app = express();
+
+app.use(
+  cors({
+    origin: ["*", "http://localhost:5173", "http://localhost:3000"],
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -14,6 +22,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/extension", ExtensionRouter);
+app.use("/api/project", ProjectRouter);
 
 app.use(
   (
@@ -28,5 +37,5 @@ app.use(
 );
 
 app.listen(PORT, () => {
-  console.log(`Server started at Port ${PORT}`);
+  console.log(`Server started at port ${PORT}`);
 });

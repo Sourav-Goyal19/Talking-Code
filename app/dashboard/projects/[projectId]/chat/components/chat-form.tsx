@@ -55,6 +55,8 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
     chat.slice(-3).map(({ query, ai_response }) => ({ query, ai_response }));
 
   const onSubmit: SubmitHandler<FormType> = async (formdata) => {
+    form.reset();
+
     const newChatMessage: ChatMessage = {
       query: formdata.query,
       ai_response: "",
@@ -62,24 +64,68 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
     };
 
     setChat((prev) => [...prev, newChatMessage]);
-    const { data, output } = await getQueryAnswer(
-      formdata.query,
-      projectId,
-      getLastMessages()
-    );
-    setChat((prev) => {
-      const updatedChat = [...prev];
-      updatedChat[prev.length - 1].sources = data;
-      return updatedChat;
-    });
-    for await (const text of readStreamableValue(output)) {
-      setChat((prev) => {
-        const updatedChat = [...prev];
-        updatedChat[prev.length - 1].ai_response += text;
-        return updatedChat;
-      });
+
+    console.log(process.env.BACKEND_URL);
+
+    try {
+      // const response = await fetch(
+      //   `${process.env.BACKEND_URL}/api/project/query-stream`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({
+      //       query: formdata.query,
+      //       projectId,
+      //       last3Messages: getLastMessages(),
+      //     }),
+      //   }
+      // );
+      const response = await fetch(
+        `http://localhost:4000/api/project/query-stream`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: formdata.query,
+            projectId,
+            last3Messages: getLastMessages(),
+          }),
+        }
+      );
+
+      console.log(response);
+      if (!response.ok) {
+        throw new Error("Failed to get ai response");
+      }
+      if (!response.body) {
+        throw new Error("Server is busy right now.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        setChat((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          lastMessage.ai_response += chunk;
+          const prevAll = prev.slice(0, -2);
+          return [...prevAll, lastMessage];
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+      setChat((prev) => [...prev.slice(0, -2)]);
+      form.setValue("query", formdata.query);
     }
-    form.reset();
   };
 
   useEffect(() => {
@@ -115,7 +161,7 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
               />
               <div ref={markdownRef} />
               <div className="flex items-center bg-custom1 rounded overflow-auto no-scrollbar gap-2">
-                {ct.sources.map((an, idx) => (
+                {ct?.sources.map((an, idx) => (
                   <p
                     key={idx}
                     className={cn(
@@ -129,7 +175,7 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
                   </p>
                 ))}
               </div>
-              {ct.sources.map((an, idx) => (
+              {ct?.sources.map((an, idx) => (
                 <div key={idx}>
                   {activeFileIndex[index] === idx && (
                     <SyntaxHighlighter

@@ -105,7 +105,7 @@ router
           fileName: extensionSourceCodeEmbeddingTable.fileName,
           summary: extensionSourceCodeEmbeddingTable.summary,
           similarity: sql<number>`1 - (${cosineDistance(
-            extensionSourceCodeEmbeddingTable.summaryEmbedding,
+            extensionSourceCodeEmbeddingTable.summaryEmbeddings,
             queryEmbeddings
           )})`,
         })
@@ -171,7 +171,7 @@ router
           fileName: extensionSourceCodeEmbeddingTable.fileName,
           summary: extensionSourceCodeEmbeddingTable.summary,
           similarity: sql<number>`1 - (${cosineDistance(
-            extensionSourceCodeEmbeddingTable.summaryEmbedding,
+            extensionSourceCodeEmbeddingTable.summaryEmbeddings,
             queryEmbeddings
           )})`,
         })

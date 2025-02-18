@@ -49,17 +49,17 @@ const summaryPrompt = ChatPromptTemplate.fromMessages([
 //   apiKey: process.env.CLAUDE_API_KEY,
 // });
 
-const llm = new ChatOpenAI({
-  model: "gpt-4-turbo",
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// const llm = new ChatGoogleGenerativeAI({
-//   model: "gemini-1.5-flash",
-//   temperature: 0,
-//   maxRetries: 2,
-//   apiKey: process.env.GOOGLE_API_KEY,
+// const llm = new ChatOpenAI({
+//   model: "gpt-4-turbo",
+//   apiKey: process.env.OPENAI_API_KEY,-
 // });
+
+const llm = new ChatGoogleGenerativeAI({
+  model: "gemini-1.5-flash",
+  temperature: 0,
+  maxRetries: 2,
+  apiKey: process.env.GOOGLE_API_KEY,
+});
 
 // const llm = new ChatGroq({
 //   model: "llama3-8b-8192",

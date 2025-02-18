@@ -90,7 +90,7 @@ const app = new Hono()
           fileName: extensionSourceCodeEmbeddingTable.fileName,
           summary: extensionSourceCodeEmbeddingTable.summary,
           similarity: sql<number>`1 - (${cosineDistance(
-            extensionSourceCodeEmbeddingTable.sourceEmbeddings,
+            extensionSourceCodeEmbeddingTable.summaryEmbeddings,
             queryEmbeddings
           )})`,
         })

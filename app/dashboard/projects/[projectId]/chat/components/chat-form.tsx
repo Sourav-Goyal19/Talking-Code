@@ -93,6 +93,7 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong. Please try again later.");
+      form.setValue("query", formdata.query);
     }
   };
 

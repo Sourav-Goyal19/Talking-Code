@@ -2,18 +2,18 @@
 import { z } from "zod";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import MDEditor from "@uiw/react-md-editor";
+import { readStreamableValue } from "ai/rsc";
 import { useSession } from "next-auth/react";
 import { ArrowUp, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
+import { getQueryAnswer } from "@/lib/query-answer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
-import { getQueryAnswer } from "@/lib/query-answer";
-import { readStreamableValue } from "ai/rsc";
-import MDEditor from "@uiw/react-md-editor";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { atomDark as editorTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface ChatFormProps {
@@ -51,7 +51,12 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
     setActiveFileIndex((prev) => ({ ...prev, [index]: idx }));
   };
 
+  const getLastMessages = () =>
+    chat.slice(-3).map(({ query, ai_response }) => ({ query, ai_response }));
+
   const onSubmit: SubmitHandler<FormType> = async (formdata) => {
+    form.reset();
+
     const newChatMessage: ChatMessage = {
       query: formdata.query,
       ai_response: "",
@@ -60,20 +65,67 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
 
     setChat((prev) => [...prev, newChatMessage]);
 
-    const { data, output } = await getQueryAnswer(formdata.query, projectId);
-    setChat((prev) => {
-      const updatedChat = [...prev];
-      updatedChat[prev.length - 1].sources = data;
-      return updatedChat;
-    });
-    for await (const text of readStreamableValue(output)) {
-      setChat((prev) => {
-        const updatedChat = [...prev];
-        updatedChat[prev.length - 1].ai_response += text;
-        return updatedChat;
-      });
+    console.log(process.env.BACKEND_URL);
+
+    try {
+      // const response = await fetch(
+      //   `${process.env.BACKEND_URL}/api/project/query-stream`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({
+      //       query: formdata.query,
+      //       projectId,
+      //       last3Messages: getLastMessages(),
+      //     }),
+      //   }
+      // );
+      const response = await fetch(
+        `http://localhost:4000/api/project/query-stream`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: formdata.query,
+            projectId,
+            last3Messages: getLastMessages(),
+          }),
+        }
+      );
+
+      console.log(response);
+      if (!response.ok) {
+        throw new Error("Failed to get ai response");
+      }
+      if (!response.body) {
+        throw new Error("Server is busy right now.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        setChat((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          lastMessage.ai_response += chunk;
+          const prevAll = prev.slice(0, -2);
+          return [...prevAll, lastMessage];
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong");
+      setChat((prev) => [...prev.slice(0, -2)]);
+      form.setValue("query", formdata.query);
     }
-    form.reset();
   };
 
   useEffect(() => {
@@ -109,7 +161,7 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
               />
               <div ref={markdownRef} />
               <div className="flex items-center bg-custom1 rounded overflow-auto no-scrollbar gap-2">
-                {ct.sources.map((an, idx) => (
+                {ct?.sources.map((an, idx) => (
                   <p
                     key={idx}
                     className={cn(
@@ -123,7 +175,7 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
                   </p>
                 ))}
               </div>
-              {ct.sources.map((an, idx) => (
+              {ct?.sources.map((an, idx) => (
                 <div key={idx}>
                   {activeFileIndex[index] === idx && (
                     <SyntaxHighlighter

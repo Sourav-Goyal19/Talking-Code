@@ -8,6 +8,8 @@
 
 /app/api/load-repo/.venv
 
+/server/node_modules
+
 # testing
 /coverage
 

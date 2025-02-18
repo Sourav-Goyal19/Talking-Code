@@ -5,9 +5,33 @@ import { generateEmbeddings } from "./github-load";
 import { sourceCodeEmbeddingTable } from "@/db/schema";
 import { db } from "@/db/drizzle";
 import { createStreamableValue } from "ai/rsc";
+// import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+// import { ChatAnthropic } from "@langchain/anthropic";
+// import { ChatPromptTemplate } from "@langchain/core/prompts";
+// import { StringOutputParser } from "@langchain/core/output_parsers";
 import { chain } from "@/app/api/[[...route]]/project";
 
-export const getQueryAnswer = async (query: string, projectId: string) => {
+// const llm = new ChatGoogleGenerativeAI({
+//   model: "gemini-1.5-flash",
+//   apiKey: process.env.GOOGLE_API_KEY,
+// });
+
+// const llm = new ChatAnthropic({
+//   model: "claude-3-5-sonnet-20240620",
+//   temperature: 0,
+//   apiKey: process.env.CLAUDE_API_KEY,
+// });
+
+type ChatMessageType = {
+  query: string;
+  ai_response: string;
+};
+
+export const getQueryAnswer = async (
+  query: string,
+  projectId: string,
+  last3Messages: ChatMessageType[]
+) => {
   const queryEmbeddings = await generateEmbeddings(query);
   const similarity = sql<number>`1-(${cosineDistance(
     sourceCodeEmbeddingTable.summaryEmbedding,
@@ -40,17 +64,26 @@ export const getQueryAnswer = async (query: string, projectId: string) => {
     ),
   }));
 
-  let context = "";
+  let context = results
+    .map(
+      (doc) =>
+        `source: ${doc.fileName}\ncode content: ${doc.sourceCode}\nsummary: ${doc.summary}\n`
+    )
+    .join("\n");
 
-  for (const doc of results) {
-    context += `source: ${doc.fileName}\n, code content: ${doc.sourceCode}\n, summary of file: ${doc.summary}\n `;
-  }
+  let conversationHistory = last3Messages
+    .map(
+      (msg, index) =>
+        `Message ${index + 1}:\nUser: ${msg.query}\nAI: ${msg.ai_response}`
+    )
+    .join("\n\n");
 
   const stream = createStreamableValue();
 
   (async () => {
     const res = await chain.stream({
       context,
+      conversation_history: conversationHistory,
       question: query,
     });
     for await (const chunk of res) {

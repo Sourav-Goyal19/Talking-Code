@@ -11,19 +11,11 @@ import {
   sourceCodeEmbeddingTable,
   usersTable,
 } from "@/db/schema";
+import axios from "axios";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
-import { streamSSE } from "hono/streaming";
-
-import { Ollama } from "@langchain/ollama";
-import { ChatDeepSeek } from "@langchain/deepseek";
-// const llm = new ChatDeepSeek({
-//   model: "deepseek-reasoner",
-//   temperature: 0,
-//   apiKey: process.env.DEEPSEEK_API_KEY,
-// });
+// import { ChatAnthropic } from "@langchain/anthropic";
 
 const llm = new ChatGoogleGenerativeAI({
   model: "gemini-1.5-flash",
@@ -34,22 +26,23 @@ const prompt = ChatPromptTemplate.fromMessages([
   [
     "system",
     `
-    You are a ai code assistant who answers questions about the codebase. Your
-    target audience is a technical intern who is looking to understand the
-    codebase.
-    AI assistant is a brand new, powerful, human-like artificial intelligence.
-    The traits of AI include expert knowledge, helpfulness, cleverness, and
-    articulateness.
-    AI is a well-behaved and well-mannered individual.
-    AI is always friendly, kind, and inspiring, and he is eager to provide vivid
-    and thoughtful responses to the user.
-    AI has the sum of all knowledge in their brain, and is able to accurately
-    answer nearly any question about any topic in conversation.
-    If the question is asking about code or a specific file, AI will provide the
-    detailed answer, giving step by step instructions, including code snippets.
+    You are an AI code assistant helping a technical intern understand the codebase.
+    Your responses should be knowledgeable, clear, step-by-step, and technically accurate.
+    You must maintain coherence by considering past interactions and avoiding repetition.
+    
+    AI assistant is a highly intelligent and articulate entity with expert-level programming knowledge.
+    AI is always helpful, friendly, and provides insightful responses with relevant code snippets.
+
     START CONTEXT BLOCK
     {context}
     END OF CONTEXT BLOCK
+
+    START CONVERSATION HISTORY
+    {conversation_history}
+    END OF CONVERSATION HISTORY
+
+    If the question is related to a previous one, build upon past answers instead of repeating them.
+    If clarification is needed, politely ask the user for more details.
     `,
   ],
   [
@@ -61,13 +54,13 @@ const prompt = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-export const chain = prompt.pipe(llm).pipe(new StringOutputParser());
-
 // const llm = new ChatAnthropic({
 //   model: "claude-3-5-sonnet-20240620",
 //   temperature: 0,
 //   apiKey: process.env.CLAUDE_API_KEY,
 // });
+
+export const chain = prompt.pipe(llm).pipe(new StringOutputParser());
 
 const app = new Hono()
   .post(
@@ -100,12 +93,22 @@ const app = new Hono()
       }
 
       try {
+        const res = await axios.get(
+          `${process.env.PYTHON_BACKEND_URL}/tree?github_url=${githubUrl}`
+        );
+        if (res.status !== 200) {
+          throw new HTTPException(500, { message: "Failed to get tree" });
+        }
+        if (!res.data.tree) {
+          throw new HTTPException(500, { message: "Failed to get tree" });
+        }
         const [project] = await db
           .insert(projectsTable)
           .values({
             name: projectName,
             githubUrl,
             userId: user.id,
+            treeStructure: res.data.tree,
           })
           .returning();
 
@@ -206,13 +209,14 @@ const app = new Hono()
     zValidator(
       "json",
       z.object({
-        query: z.string().min(1, "Query is required"),
-        projectId: z.string(),
+        json: z.string().min(1, "Query is required"),
+        projectId: z.string().uuid("Invalid project id"),
       })
     ),
     async (ctx) => {
       const { email } = ctx.req.valid("param");
-      const { projectId, query } = ctx.req.valid("json");
+
+      const { projectId, json } = ctx.req.valid("json");
 
       const [user] = await db
         .select()
@@ -223,7 +227,7 @@ const app = new Hono()
         throw new HTTPException(404, { message: "User Not Found" });
       }
 
-      const queryVector = await generateEmbeddings(query);
+      const queryVector = await generateEmbeddings(json);
       let context = "";
 
       const similarity = sql<number>`1-(${cosineDistance(
@@ -257,12 +261,13 @@ const app = new Hono()
         ),
       }));
 
-      for (const doc of results) {
+      for (const doc of updatedData) {
         context += `source: ${doc.fileName}\n, code content: ${doc.sourceCode}\n, summary of file: ${doc.summary}\n `;
       }
       const res = await chain.invoke({
         context,
-        question: query,
+        question: json,
+        conversation_history: "",
       });
       return ctx.json({ data: updatedData, output: res });
     }

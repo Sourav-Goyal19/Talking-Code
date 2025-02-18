@@ -4,7 +4,10 @@
 import { db } from "@/db/drizzle";
 import { TaskType } from "@google/generative-ai";
 // import { Document } from "@langchain/core/documents";
-import { sourceCodeEmbeddingTable } from "@/db/schema";
+import {
+  extensionSourceCodeEmbeddingTable,
+  sourceCodeEmbeddingTable,
+} from "@/db/schema";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { CohereEmbeddings } from "@langchain/cohere";
 import { ChatGroq } from "@langchain/groq";
@@ -16,6 +19,7 @@ import {
   ChatGoogleGenerativeAI,
   GoogleGenerativeAIEmbeddings,
 } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 
 const summaryPrompt = ChatPromptTemplate.fromMessages([
   [
@@ -39,10 +43,15 @@ const summaryPrompt = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-const llm = new ChatAnthropic({
-  model: "claude-3-5-sonnet-20240620",
-  temperature: 0,
-  apiKey: process.env.CLAUDE_API_KEY,
+// const llm = new ChatAnthropic({
+//   model: "claude-3-5-sonnet-20240620",
+//   temperature: 0,
+//   apiKey: process.env.CLAUDE_API_KEY,
+// });
+
+const llm = new ChatOpenAI({
+  model: "gpt-4-turbo",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 // const llm = new ChatGoogleGenerativeAI({
@@ -99,6 +108,56 @@ export const indexGithubRepo = async (
     await db.insert(sourceCodeEmbeddingTable).values(
       filteredEmbeddings.map((embed) => ({
         projectId,
+        summary: embed.summary,
+        summaryEmbedding: embed.embedding,
+        sourceCode: embed.sourceCode,
+        fileName: embed.fileName,
+      }))
+    );
+
+    console.log("Successfully indexed GitHub repository.");
+  } catch (error) {
+    console.error("Error indexing GitHub repository:", error);
+    throw new Error("Failed to index GitHub repository.");
+  }
+};
+
+export const extensionIndexGithubRepo = async (
+  extensionProjectId: string,
+  github_url: string,
+  branch: string = "main",
+  github_token?: string
+) => {
+  // console.log("Calling");
+  try {
+    // const { data: docs } = await loadGithubRepo(
+    //   github_url,
+    //   branch,
+    //   github_token
+    // );
+    // console.log(docs);
+    const res = await axios.get(
+      `${process.env.PYTHON_BACKEND_URL}/tree?github_url=${github_url}`
+    );
+    // console.log(res.data);
+    const files = parseFiles(res.data.content);
+
+    const allEmbeddings = await generateAllEmbeddings(files);
+
+    const filteredEmbeddings = allEmbeddings
+      .filter(
+        (result) => result.status === "fulfilled" && result.value !== null
+      )
+      .map((result) => (result as PromiseFulfilledResult<any>).value);
+
+    if (filteredEmbeddings.length === 0) {
+      console.log("No embeddings generated. Skipping database insertion.");
+      return;
+    }
+
+    await db.insert(extensionSourceCodeEmbeddingTable).values(
+      filteredEmbeddings.map((embed) => ({
+        extensionProjectId,
         summary: embed.summary,
         summaryEmbedding: embed.embedding,
         sourceCode: embed.sourceCode,

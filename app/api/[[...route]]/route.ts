@@ -16,7 +16,7 @@ app.onError((err, ctx) => {
   return ctx.json({ error: err.message }, 500);
 });
 
-export const routes = app
+const routes = app
   .get("/", (c) => {
     return c.json({ message: "Hello Hono!" });
   })

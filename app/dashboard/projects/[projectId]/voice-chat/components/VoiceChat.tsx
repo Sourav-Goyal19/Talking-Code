@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mic, MicOff, Loader2, Globe } from "lucide-react";
+import { Mic, MicOff, Loader2, VolumeX } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,12 +51,11 @@ export default function VoiceChat({ projectId }: { projectId: string }) {
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState("");
   const [error, setError] = useState("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(
     SUPPORTED_LANGUAGES[0]
   );
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
-    null
-  );
+  
   const [availableVoices, setAvailableVoices] = useState<
     SpeechSynthesisVoice[]
   >([]);
@@ -100,11 +99,16 @@ export default function VoiceChat({ projectId }: { projectId: string }) {
   };
 
   const speakResponse = (text: string) => {
-    window.speechSynthesis.cancel(); // Cancel any ongoing speech
+    setIsSpeaking(true);
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = selectedLanguage.code;
     utterance.voice = getBestVoiceForLanguage(selectedLanguage.code);
     window.speechSynthesis.speak(utterance);
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    }
   };
 
   const toggleListening = async () => {
@@ -258,6 +262,23 @@ export default function VoiceChat({ projectId }: { projectId: string }) {
                   </>
                 )}
               </Button>
+
+              {
+                isSpeaking && (
+                  <Button
+                    onClick={() => {
+                      window.speechSynthesis.cancel();
+                      setIsSpeaking(false);
+                    }}
+                    disabled={isLoading}
+                    variant="default"
+                    className="w-full text-foreground"
+                  >
+                    <VolumeX className="w-4 h-4 mr-2" />
+                    Stop Speaking
+                  </Button>
+                )
+              }
             </div>
 
             {isLoading && (

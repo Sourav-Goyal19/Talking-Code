@@ -10,19 +10,14 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const params = await request.nextUrl.searchParams;
-    const projectId = params.get("projectId") || "";
+    const projectId = request.nextUrl.searchParams.get("projectId") || "";
 
-    const translateToEnglish = await genAI
+    const translateToEnglishResponse = await genAI
       .getGenerativeModel({ model: "gemini-pro" })
       .generateContent(`Translate this to English: ${data.question}`);
 
-    const englishText = translateToEnglish.response.text();
-    // console.log(JSON.parse(englishText));
-    // const { language, questionInEnglish } = JSON.parse(englishText);
+    const englishText = translateToEnglishResponse.response.text();
     const questionEmbedding = await generateEmbeddings(englishText || "");
-
-    let context = "";
 
     const similarity = sql<number>`1-(${cosineDistance(
       sourceCodeEmbeddingTable.summaryEmbedding,
@@ -55,28 +50,22 @@ export async function POST(request: NextRequest) {
       ),
     }));
 
-    for (const doc of updatedData) {
-      context += `source: ${doc.fileName}\n, code content: ${doc.sourceCode}\n, summary of file: ${doc.summary}\n `;
-    }
+    const context = updatedData
+      .map(
+        (doc) =>
+          `source: ${doc.fileName}\ncode content: ${doc.sourceCode}\nsummary of file: ${doc.summary}\n`
+      )
+      .join("\n");
 
     const chatResponse = await genAI
       .getGenerativeModel({ model: "gemini-pro" })
       .generateContent(
-        `Based on this GitHub repo context:\n${context}\nAnswer: ${englishText}`
+        `Based on this GitHub repo context:\n${context}\nAnswer: ${englishText} and only return back in ${data.language} language not any other language`
       );
 
-    const aiEnglishResponse = chatResponse.response.text();
-    // console.log(aiEnglishResponse);
+    const aiResponse = chatResponse.response.text();
 
-    const translateToUserLang = await genAI
-      .getGenerativeModel({ model: "gemini-pro" })
-      .generateContent(
-        `Translate this back to the ${data.language} language: ${aiEnglishResponse}`
-      );
-
-    // console.log(translateToUserLang.response.text());
-
-    return NextResponse.json({ content: translateToUserLang.response.text() });
+    return NextResponse.json({ content: aiResponse });
   } catch (error) {
     console.error("Error processing request:", error);
     return NextResponse.json(

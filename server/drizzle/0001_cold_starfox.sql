@@ -1,1 +1,0 @@
-ALTER TABLE "extension_source_code_embeddings" RENAME COLUMN "source_embeddings" TO "summary_embeddings";

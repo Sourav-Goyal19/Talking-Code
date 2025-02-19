@@ -131,8 +131,8 @@ export default function LandingPage() {
           </h2>
           <p className="text-lg max-w-4xl mx-auto text-white/50 mb-12">
             Our platform is designed to make machine learning simple and
-            engaging. Whether you're just starting or looking to deepen your
-            understanding, we've got you covered.
+            engaging. Whether you&apos;re just starting or looking to deepen your
+            understanding, we&apos;ve got you covered.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features.map((point, index) => (
@@ -226,7 +226,7 @@ export default function LandingPage() {
                 className="bg-custom1/30 p-8 rounded-lg shadow-lg border-[#374151] border"
               >
                 <p className="text-xl italic text-white/50 mb-4">
-                  "{testimonial.testimonial}"
+                &quot;{testimonial.testimonial}&quot;
                 </p>
                 <p className="font-semibold text-blue-300">
                   {testimonial.name}, {testimonial.role}
@@ -241,7 +241,7 @@ export default function LandingPage() {
             Have Questions? Get in Touch!
           </h2>
           <p className="text-lg max-w-4xl mx-auto text-white/50 mb-12">
-            Whether you're a beginner or an expert, we're here to help you. Drop
+            Whether you&apos;re a beginner or an expert, we&apos;re here to help you. Drop
             us a message or join our community to learn more.
           </p>
           <div className="flex-col flex md:flex-row justify-center gap-4">

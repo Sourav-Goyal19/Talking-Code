@@ -26,9 +26,9 @@ const Voice: React.FC<VoiceChatProps> = async ({ params }) => {
   
 
     return (
-        <div>
+        <>
             <VoiceChat projectId={params.projectId}/>
-        </div>
+        </>
     );
 }
 

@@ -3,7 +3,7 @@ import NewProjectForm from "./components/project-form";
 
 const Dashboard = () => {
   return (
-    <div className="flex flex-col md:flex-row p-4 gap-10 space-y-4 md:space-y-0 md:space-x-4">
+    <div className="grid grid-cols-1 gap-10 p-4 md:grid-cols-2 md:space-x-4">
       <NewProjectForm />
       <ProjectsList />
     </div>

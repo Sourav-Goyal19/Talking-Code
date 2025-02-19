@@ -16,17 +16,17 @@ const ProjectsList = () => {
   const isDisabled = projectQuery.isLoading || projectQuery.isPending;
 
   return (
-    <div className="w-1/2">
-      <h2 className="text-secondary-foreground/70 text-3xl font-semibold mb-4">
+    <div>
+      <h2 className="mb-4 text-3xl font-semibold text-secondary-foreground/70">
         Your Projects
       </h2>
-      <div className="space-y-4 w-full">
+      <div className="w-full space-y-4">
         {isDisabled ? (
           <div className="flex items-center justify-center">
             <Loader2 className="animate-spin size-8" />
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-secondary-foreground/70 text-center">
+          <div className="text-center text-secondary-foreground/70">
             No Projects Found
           </div>
         ) : (
@@ -35,7 +35,7 @@ const ProjectsList = () => {
               <Link
                 href={`dashboard/projects/${project.id}`}
                 key={project.id}
-                className="bg-custom2 rounded-md p-2 px-4 text-lg hover:opacity-80 cursor-pointer flex items-center justify-between"
+                className="flex items-center justify-between p-2 px-4 text-lg rounded-md cursor-pointer bg-custom2 hover:opacity-80"
                 onClick={() => setProject(project)}
               >
                 {project.name}

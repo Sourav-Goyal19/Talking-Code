@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 import {
   Form,
   FormField,
@@ -10,7 +10,14 @@ import {
   FormDescription,
   FormMessage,
 } from "@/components/ui/form";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Github, Link2 } from "lucide-react";
@@ -24,7 +31,7 @@ import toast from "react-hot-toast";
 const NewProjectForm = () => {
   const { data } = useSession();
   const projectMutation = useCreateProject(data?.user?.email!);
-  
+
   const formSchema = z.object({
     projectName: z
       .string()
@@ -58,17 +65,12 @@ const NewProjectForm = () => {
   };
 
   return (
-    <div className="w-1/2">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl">
-            <Github className="h-6 w-6" />
-            New Project
-          </CardTitle>
-          <CardDescription>
-            Connect your GitHub repository to start tracking your project
-          </CardDescription>
-        </CardHeader>
+    <div>
+      <h2 className="flex items-center mb-4 text-3xl font-semibold text-secondary-foreground/70">
+        <Github className="w-6 h-6 mr-2" />
+        New Project
+      </h2>
+      <Card className="pt-4 bg-custom2">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
@@ -77,11 +79,11 @@ const NewProjectForm = () => {
                 name="projectName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project Name</FormLabel>
+                    <FormLabel className="text-base">Project Name</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Enter project name"
-                        className="bg-background"
+                        className="bg-custom2"
                         disabled={projectMutation.isPending}
                         {...field}
                       />
@@ -98,12 +100,14 @@ const NewProjectForm = () => {
                 name="githubUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>GitHub Repository URL</FormLabel>
+                    <FormLabel className="text-base">
+                      GitHub Repository URL
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           placeholder="https://github.com/username/repository"
-                          className="bg-background pl-9"
+                          className="bg-custom2 pl-9"
                           disabled={projectMutation.isPending}
                           {...field}
                         />
@@ -122,12 +126,14 @@ const NewProjectForm = () => {
                 name="accessToken"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Access Token (Optional)</FormLabel>
+                    <FormLabel className="text-base">
+                      Access Token (Optional)
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="GitHub personal access token"
-                        className="bg-background"
+                        className="bg-custom2"
                         disabled={projectMutation.isPending}
                         {...field}
                       />
@@ -151,7 +157,7 @@ const NewProjectForm = () => {
               <Button
                 type="submit"
                 disabled={projectMutation.isPending}
-                className="min-w-[100px]"
+                className="min-w-[100px] text-foreground"
               >
                 {projectMutation.isPending ? "Creating..." : "Create"}
               </Button>

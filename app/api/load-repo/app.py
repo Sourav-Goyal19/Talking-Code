@@ -1,3 +1,4 @@
+import re
 from flask import Flask, jsonify, request
 from gitingest import ingest
 from graphs.query_graph import app as query_graph
@@ -14,8 +15,13 @@ def get_tree():
         return jsonify({"error": "Missing 'github_url' parameter"}), 400
 
     try:
-        summary, tree, content = ingest(github_url)
-        return jsonify({"tree": tree, "content": content})
+        summary, tree, content = ingest(github_url, exclude_patterns=".git")
+        # print(len(tree))
+        cleaned_structure = re.sub(
+            r"(?m)^\s*├── .git/.*(?:\n^\s*[│└].*)*\n?", "", tree, flags=re.MULTILINE
+        )
+
+        return jsonify({"tree": cleaned_structure, "content": content})
     except Exception as e:
         return (
             jsonify({"error": str(e)}),

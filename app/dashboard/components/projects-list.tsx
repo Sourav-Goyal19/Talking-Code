@@ -20,7 +20,7 @@ const ProjectsList = () => {
       <h2 className="mb-4 text-3xl font-semibold text-secondary-foreground/70">
         Your Projects
       </h2>
-      <div className="w-full space-y-4">
+      <div>
         {isDisabled ? (
           <div className="flex items-center justify-center">
             <Loader2 className="animate-spin size-8" />
@@ -30,7 +30,7 @@ const ProjectsList = () => {
             No Projects Found
           </div>
         ) : (
-          <div>
+          <div className="w-full space-y-4">
             {projects.map((project) => (
               <Link
                 href={`dashboard/projects/${project.id}`}

@@ -24,14 +24,24 @@ def generate_node(state, config=None):
     )
 
 
-def reflect_node(state):
+def reflect_node(state, config=None):
+    conversation_history = (
+        config.get("configurable", {}).get("conversation_history", "") if config else ""
+    )
     response = reflection_chain.invoke(
-        {"messages": state, "question": state[0].content}
+        {
+            "messages": state,
+            "question": state[0].content,
+            "conversation_history": conversation_history,
+        }
     )
     return [HumanMessage(content=response.content)]
 
 
-def refine_node(state):
+def refine_node(state, config=None):
+    conversation_history = (
+        config.get("configurable", {}).get("conversation_history", "") if config else ""
+    )
     original_response = state[-2].content
     critique = state[-1].content
     revised_response = refine_chain.invoke(
@@ -39,6 +49,7 @@ def refine_node(state):
             "original_response": original_response,
             "critique": critique,
             "messages": state,
+            "conversation_history": conversation_history,
         }
     )
     return [AIMessage(content=revised_response.content)]

@@ -195,7 +195,7 @@ function parseFiles(data: string): Record<string, string> {
 export const generateAllEmbeddings = async (docs: Record<string, string>) => {
   const fileEntries = Object.entries(docs);
   const batchSize = 20;
-  const delayBetweenBatches = 2000;
+  const delayBetweenBatches = 5000;
   // console.log(docs);
   let results: PromiseSettledResult<any>[] = [];
 
@@ -210,7 +210,11 @@ export const generateAllEmbeddings = async (docs: Record<string, string>) => {
 
     const batchResults = await Promise.allSettled(
       batch.map(async ([fileName, code]) => {
-        if (fileName.startsWith("/.git")) {
+        if (
+          fileName.startsWith("/.git") ||
+          fileName.startsWith("eslint") ||
+          fileName.startsWith(".eslintrc")
+        ) {
           return null;
         }
         try {

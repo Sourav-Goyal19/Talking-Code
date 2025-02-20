@@ -12,13 +12,18 @@ generation_prompt = ChatPromptTemplate.from_messages(
             """You are an AI code assistant who answers questions about the codebase. Your
             target audience is a technical intern who is looking to understand the
             codebase. Provide detailed, step-by-step instructions, including code snippets
-            when applicable.
+            when applicable. Ensure your responses are detailed, structured, 
+            and easy to follow.
+            
             START CONTEXT BLOCK
             {context}
             END OF CONTEXT BLOCK
+
             START CONVERSATION HISTORY
             {conversation_history}
             END CONVERSATION HISTORY
+
+            Use the provided context and conversation history to generate precise, informative, and relevant answers.
             """,
         ),
         ("human", "START QUESTION\n{question}\nEND OF QUESTION"),
@@ -31,21 +36,34 @@ reflection_prompt = ChatPromptTemplate.from_messages(
         (
             "system",
             """You are a senior software engineer reviewing an AI-generated response to a technical question about a codebase. 
-            Evaluate the response based on:
+            Your goal is to provide a detailed critique while considering the conversation history to ensure consistency and relevance.
+
+            **Evaluation Criteria:**
             - **Accuracy:** Does it correctly answer the question?
             - **Completeness:** Does it provide all necessary details, including explanations and relevant code snippets?
             - **Clarity:** Is it easy to understand for a technical intern?
             - **Actionability:** Can the intern use this response to proceed with their task effectively?
-            
-            Provide a concise but detailed critique of the AI's response. Highlight errors, missing information, or unclear explanations.
-            
-            AI Response:
+            - **Consistency:** Does the response align with prior discussion in the conversation history?
+
+            **Instructions:**
+            - Review the AI-generated response.
+            - Compare it with previous messages in the conversation history.
+            - Highlight any errors, missing details, or inconsistencies.
+            - Suggest improvements where necessary.
+
+            START Conversation History:
+            --------------------
+            {conversation_history}
+            --------------------
+            END Conversation History:
+
+            **AI Response:**
             {messages}
-            
-            Original Question:
+
+            **Original Question:**
             {question}
-            
-            Critique:
+
+            **Critique:**
             """,
         ),
         MessagesPlaceholder(variable_name="messages"),
@@ -56,9 +74,17 @@ refine_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            """You are an AI editor tasked with improving a previous response based on a senior engineer's critique. Use the critique to enhance the response's accuracy, completeness, clarity, and actionability. Provide a revised response tailored for a technical intern.
+            """You are an AI editor tasked with improving a previous response based on a senior engineer's critique. 
+            Use the critique and conversation history to enhance the response's **accuracy, completeness, clarity, 
+            and actionability** while maintaining consistency with previous exchanges.
 
-            **Important Note** - Just Provide the complete revised response without any extra line.
+            **Important Note** - Just provide the complete revised response without any extra lines.
+
+            START CONVERSATION HISTORY:
+            --------------------
+            {conversation_history}
+            --------------------
+            END CONVERSATION HISTORY
 
             Original Response:
             {original_response}
@@ -72,6 +98,7 @@ refine_prompt = ChatPromptTemplate.from_messages(
         MessagesPlaceholder(variable_name="messages"),
     ]
 )
+
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash", api_key=os.getenv("GOOGLE_API_KEY")

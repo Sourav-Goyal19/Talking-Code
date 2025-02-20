@@ -1,9 +1,9 @@
-langchain
-Flask
-langchain-openai
-langchain-core
-langchain-community
 gitingest
-langchain-sambanova
+Flask
+langchain_community
+langchain_core
+langgraph
 langchain-google-genai
-langchain-ollama
+langchain-anthropic
+python-dotenv
+grandalf

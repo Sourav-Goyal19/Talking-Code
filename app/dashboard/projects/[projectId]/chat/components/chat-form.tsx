@@ -12,16 +12,32 @@ import {
   Code,
   FileSearch,
   Sparkles,
+  ChevronUp,
+  ChevronDown,
+  Zap,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getQueryAnswer } from "@/lib/query-answer";
+import { getQueryAnswer, getQueryAnswerPro } from "@/lib/query-answer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { atomDark as editorTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import axios from "axios";
 
 interface ChatFormProps {
   projectId: string;
@@ -68,19 +84,39 @@ const EXAMPLE_QUESTIONS = [
   },
 ];
 
+const models = [
+  {
+    value: "free",
+    label: "Free",
+    description: "Best for normal responses",
+    icon: <Zap className="w-4 h-4" />,
+  },
+  {
+    value: "pro",
+    label: "Pro",
+    description: "3x more detailed response",
+    icon: <Sparkles className="w-4 h-4" />,
+  },
+];
+
 const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
   const [activeFileIndex, setActiveFileIndex] = useState<
     Record<number, number>
   >({});
+  const [selectedModel, setSelectedModel] = useState("free");
   const [chat, setChat] = useState<ChatMessage[]>([]);
-  const { data: sessionData } = useSession();
-  const formSchema = z.object({ query: z.string().min(1) });
+  const formSchema = z.object({
+    query: z.string().min(1),
+    model: z.enum(["free", "pro"]),
+  });
+  const [isOpen, setIsOpen] = useState(false);
+
   const markdownRef = useRef<HTMLDivElement>(null);
 
   type FormType = z.infer<typeof formSchema>;
 
   const form = useForm<FormType>({
-    defaultValues: { query: "" },
+    defaultValues: { query: "", model: "free" },
     resolver: zodResolver(formSchema),
   });
 
@@ -100,7 +136,7 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
     chat.slice(-3).map(({ query, ai_response }) => ({ query, ai_response }));
 
   const onSubmit: SubmitHandler<FormType> = async (formdata) => {
-    form.reset();
+    form.reset({ model: formdata.model });
 
     const newChatMessage: ChatMessage = {
       query: formdata.query,
@@ -110,26 +146,41 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
 
     try {
       setChat((prev) => [...prev, newChatMessage]);
-      const { data, output } = await getQueryAnswer(
-        formdata.query,
-        projectId,
-        getLastMessages()
-      );
-      setChat((prev) => {
-        const updatedChat = [...prev];
-        updatedChat[prev.length - 1].sources = data;
-        return updatedChat;
-      });
-      for await (const text of readStreamableValue(output)) {
+      if (formdata.model === "free") {
+        const { data, output } = await getQueryAnswer(
+          formdata.query,
+          projectId,
+          getLastMessages()
+        );
         setChat((prev) => {
           const updatedChat = [...prev];
-          const lastIndex = updatedChat.length - 1;
-          if (lastIndex >= 0) {
-            updatedChat[lastIndex] = {
-              ...updatedChat[lastIndex],
-              ai_response: updatedChat[lastIndex].ai_response + text,
-            };
-          }
+          updatedChat[prev.length - 1].sources = data;
+          return updatedChat;
+        });
+        for await (const text of readStreamableValue(output)) {
+          setChat((prev) => {
+            const updatedChat = [...prev];
+            const lastIndex = updatedChat.length - 1;
+            if (lastIndex >= 0) {
+              updatedChat[lastIndex] = {
+                ...updatedChat[lastIndex],
+                ai_response: updatedChat[lastIndex].ai_response + text,
+              };
+            }
+            return updatedChat;
+          });
+        }
+      } else {
+        const { data, output } = await getQueryAnswerPro(
+          formdata.query,
+          projectId,
+          getLastMessages()
+        );
+
+        setChat((prev) => {
+          const updatedChat = [...prev];
+          updatedChat[prev.length - 1].sources = data;
+          updatedChat[prev.length - 1].ai_response = output;
           return updatedChat;
         });
       }
@@ -270,19 +321,86 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="fixed inset-x-0 px-4 bottom-6 md:px-28">
               <div className="max-w-5xl mx-auto">
-                <div className="relative">
+                <div className="relative flex gap-2">
                   <FormField
                     control={form.control}
                     name="query"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Ask about your code..."
-                            className="pl-6 pr-16 text-gray-100 bg-gray-800 border-gray-700 rounded-full py-7 placeholder:text-gray-500 focus:ring-primary"
-                          />
-                        </FormControl>
+                      <FormItem className="flex-1">
+                        <div className="relative">
+                          <div className="absolute top-2 left-2">
+                            <Popover open={isOpen} onOpenChange={setIsOpen}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={isOpen}
+                                  className={cn(
+                                    "flex items-center gap-2 px-3 bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-100",
+                                    selectedModel == "pro" && "text-primary"
+                                  )}
+                                >
+                                  {
+                                    models.find(
+                                      (model) => model.value === selectedModel
+                                    )?.icon
+                                  }
+                                  <span className="hidden sm:inline">
+                                    {
+                                      models.find(
+                                        (model) => model.value === selectedModel
+                                      )?.label
+                                    }
+                                  </span>
+                                  {isOpen ? (
+                                    <ChevronUp className="w-4 h-4 ml-2" />
+                                  ) : (
+                                    <ChevronDown className="w-4 h-4 ml-2" />
+                                  )}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[200px] p-0 bg-gray-800 border-gray-700">
+                                <div className="grid">
+                                  {models.map((model) => (
+                                    <button
+                                      key={model.value}
+                                      className={cn(
+                                        "flex items-start gap-2 w-full p-3 hover:bg-gray-700 transition-colors",
+                                        selectedModel === model.value &&
+                                          "bg-gray-700"
+                                      )}
+                                      onClick={() => {
+                                        setSelectedModel(model.value);
+                                        form.setValue(
+                                          "model",
+                                          model.value == "free" ? "free" : "pro"
+                                        );
+                                        setIsOpen(false);
+                                      }}
+                                    >
+                                      <div className="mt-1">{model.icon}</div>
+                                      <div className="text-left">
+                                        <div className="text-sm font-medium text-gray-100">
+                                          {model.label}
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                          {model.description}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Ask about your code..."
+                              className="pl-32 pr-16 text-gray-100 bg-gray-800 border-gray-700 rounded-md py-7 placeholder:text-gray-500 focus:ring-primary"
+                            />
+                          </FormControl>
+                        </div>
                       </FormItem>
                     )}
                   />

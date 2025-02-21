@@ -133,7 +133,10 @@ const ChatForm: React.FC<ChatFormProps> = ({ projectId }) => {
   };
 
   const getLastMessages = () =>
-    chat.slice(-3).map(({ query, ai_response }) => ({ query, ai_response }));
+    chat
+      .slice(-4, -1)
+      .reverse()
+      .map(({ query, ai_response }) => ({ query, ai_response }));
 
   const onSubmit: SubmitHandler<FormType> = async (formdata) => {
     form.reset({ model: formdata.model });

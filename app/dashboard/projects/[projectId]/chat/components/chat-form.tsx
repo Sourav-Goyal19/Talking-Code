@@ -22,8 +22,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getQueryAnswer, getQueryAnswerPro } from "@/lib/query-answer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark as editorTheme } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
   Select,

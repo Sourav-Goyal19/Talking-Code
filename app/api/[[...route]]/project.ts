@@ -97,7 +97,7 @@ const app = new Hono()
 
       try {
         const res = await axios.get(
-          `${process.env.PYTHON_BACKEND_URL}/tree?github_url=${githubUrl}`
+          `${process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL}/tree?github_url=${githubUrl}`
         );
         if (res.status !== 200) {
           throw new HTTPException(500, { message: "Failed to get tree" });

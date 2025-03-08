@@ -146,11 +146,14 @@ export const getQueryAnswerPro = async (
     )
     .join("\n\n");
 
-  const resp = await axios.post(`${process.env.PYTHON_BACKEND_URL}/query`, {
-    query,
-    context,
-    conversationHistory,
-  });
+  const resp = await axios.post(
+    `${process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL}/query`,
+    {
+      query,
+      context,
+      conversationHistory,
+    }
+  );
 
   const output = resp.data.response;
 

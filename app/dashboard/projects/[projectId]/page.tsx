@@ -57,7 +57,7 @@ const IndiviualProject: React.FC<IndiviualProjectProps> = async ({
   });
 
   // const res = await axios.get(
-  //   `${process.env.PYTHON_BACKEND_URL}/tree?github_url=${project.githubUrl}`
+  //   `${process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL}/tree?github_url=${project.githubUrl}`
   // );
   // const treeStructure = res.data.tree;
   // console.log(treeStructure);

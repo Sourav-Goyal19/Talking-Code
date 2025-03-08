@@ -54,7 +54,7 @@ export const indexGithubRepo = async (
     // );
     // console.log(docs);
     const res = await axios.get(
-      `${process.env.PYTHON_BACKEND_URL}?github_url=${github_url}`
+      `${process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL}?github_url=${github_url}`
     );
     // console.log(res.data);
     const files = parseFiles(res.data.content);

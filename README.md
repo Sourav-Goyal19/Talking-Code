@@ -14,6 +14,8 @@
 
 ![](https://res.cloudinary.com/dvovo1lfg/image/upload/v1741973730/projects/talking-code/pgzn5c1pqxmd0n3au17c.png)
 
+![](https://res.cloudinary.com/dvovo1lfg/image/upload/v1744973569/projects/talking-code/diagram-export-4-18-2025-4_19_55-PM_iczeuw.png)
+
 AI-Powered GitHub Repository Assistant is an advanced tool designed to analyze GitHub repositories, provide intelligent summaries, offer AI-powered chat assistance, and enable seamless voice-based interaction. It enhances developer productivity by automating repository insights, visualizing directory structures, and even generating pull requests with AI-generated code suggestions.
 
 ## Features 🎉

@@ -24,8 +24,7 @@ AI-Powered GitHub Repository Assistant is an advanced tool designed to analyze G
 - 🔊 **Voice-Based Interaction:** Communicate with the AI assistant using voice commands for a hands-free experience.  
 - 📊 **Commit History Summarization:** Automatically generate concise summaries of commit history for quick understanding.  
 - 📁 **Directory Structure Visualization:** Get an interactive view of your repository’s file structure for easy navigation.  
-- 💡 **AI-Generated Code Suggestions:** Receive AI-powered code recommendations based on your repository’s context.  
-- 🔀 **Create and Submit Pull Requests:** Generate code changes and directly create pull requests through the platform.  
+- 💡 **AI-Generated Code Suggestions:** Receive AI-powered code recommendations based on your repository’s context.
 - 📂 **Code Embedding and Similarity Search:** Find relevant code snippets based on embeddings and similarity scores.  
 - 🔍 **LangChain for Free Responses:** Query embeddings, similarity search, and direct AI-generated responses.  
 - 🤖 **LangGraph for Pro Responses:** Structured, agent-based interactions for refined and optimized answers.  

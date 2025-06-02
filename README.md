@@ -39,7 +39,7 @@ AI-Powered GitHub Repository Assistant is an advanced tool designed to analyze G
 
 - **Frontend:** Next.js, TypeScript  
 - **Backend:** Node.js, Hono.js  
-- **Database:** PostgreSQL, MongoDB  
+- **Database:** PostgreSQL  
 - **AI/ML Integration:** LangChain, LangGraph  
 - **Styles:** TailwindCSS, ShadCN UI  
 - **Deployment:** Vercel  

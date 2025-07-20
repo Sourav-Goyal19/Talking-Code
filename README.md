@@ -80,7 +80,7 @@ To set up and run the project locally, follow these steps:
 - Utilize AI-generated code suggestions to enhance your codebase.
 
 ## Deployment
-Follow the standard Next.js deployment process. The application is live [here](https://your-live-app-url.com).
+Follow the standard Next.js deployment process. The application is live [here](https://talking-code.vercel.app).
 
 ## Contributing
 Contributions are welcome! Follow the fork-and-pull request workflow. Ensure your code meets the project’s coding standards and passes all tests.
